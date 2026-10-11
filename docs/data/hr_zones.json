@@ -1,0 +1,7 @@
+[
+{"zone":1,"min_bpm":0,"max_bpm":137},
+{"zone":2,"min_bpm":138,"max_bpm":171},
+{"zone":3,"min_bpm":172,"max_bpm":188},
+{"zone":4,"min_bpm":189,"max_bpm":205},
+{"zone":5,"min_bpm":206,"max_bpm":null}
+]
