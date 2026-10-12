@@ -6,12 +6,17 @@
  * API utilisée par la page : dash.calc, dash.data, dash.colors, dash.onData, dash.setLink.
  */
 (() => {
+  // Les sources « lazy » ne sont chargées que lorsqu’un graphique les demande (onglets Entraînement et Carte).
   const DATASETS = {
-    activities: 'data/activities.json',
-    races: 'data/races.json',
-    hr_streams: 'data/hr_streams.json',
-    hr_zones: 'data/hr_zones.json',
-    meta: 'data/meta.json',
+    activities: { url: 'data/activities.json' },
+    races: { url: 'data/races.json' },
+    hr_streams: { url: 'data/hr_streams.json' },
+    hr_zones: { url: 'data/hr_zones.json' },
+    meta: { url: 'data/meta.json' },
+    goal: { url: 'data/goal.json' },
+    laps: { url: 'data/laps.json', lazy: true },
+    efforts: { url: 'data/efforts.json', lazy: true },
+    routes: { url: 'data/routes.json', lazy: true },
   };
   const LOADING = Object.freeze({ status: 'loading', data: null });
   const ERROR = Object.freeze({ status: 'error', data: null });
@@ -23,7 +28,10 @@
   const clone = typeof structuredClone === 'function' ? structuredClone : (v) => JSON.parse(JSON.stringify(v));
 
   const get = (id, path = []) => {
-    if (Object.prototype.hasOwnProperty.call(DATASETS, id)) return raw.get(id) || LOADING;
+    if (Object.prototype.hasOwnProperty.call(DATASETS, id)) {
+      if (!raw.has(id) && !started.has(id)) load(id);
+      return raw.get(id) || LOADING;
+    }
     const def = defs.get(id);
     if (!def) {
       console.error(`[sillage] source inconnue : ${id}`);
@@ -89,7 +97,10 @@
     },
   };
 
-  Object.entries(DATASETS).forEach(([id, url]) => {
+  const started = new Set();
+  function load(id) {
+    started.add(id);
+    const { url } = DATASETS[id];
     fetch(url, { cache: 'no-cache' })
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -101,6 +112,9 @@
         raw.set(id, ERROR);
       })
       .finally(notify);
+  }
+  Object.entries(DATASETS).forEach(([id, d]) => {
+    if (!d.lazy) load(id);
   });
 
   // Les largeurs de texte des graphiques dépendent de la police : on redessine une fois chargée.

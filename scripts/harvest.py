@@ -1,14 +1,15 @@
 """Rassemble ce que le connecteur Strava a renvoyé pendant la synchro et prépare l'analyse.
 
-    python3 scripts/harvest.py --plan   → fenêtre à relire (à passer à list_activities)
-    python3 scripts/harvest.py          → lit les réponses du connecteur, prépare .sync/
+    python3 scripts/harvest.py --plan          → fenêtre à relire (à passer à list_activities)
+    python3 scripts/harvest.py                 → lit les réponses du connecteur, prépare .sync/
+    python3 scripts/harvest.py --backlog 40    → idem, avec 40 anciennes sorties à compléter (tours, records)
 
 Les réponses sont lues à deux endroits, fusionnés :
   1. le journal de la session Claude en cours (~/.claude/projects/**/*.jsonl récents) ;
   2. en secours, les réponses copiées telles quelles dans .sync/raw/*.json
      (list_*.json, streams_<id>.json, zones.json).
-Produit dans .sync/ : activities.json, streams/<id>.json, zones.json et review.md
-(la fiche à lire pour décider quelles sorties sont des compétitions).
+Produit dans .sync/ : activities.json, routes.json, streams/<id>.json, perf/<id>.json, zones.json
+et review.md (la fiche à lire pour décider quelles sorties sont des compétitions).
 """
 import argparse
 import datetime as dt
@@ -20,9 +21,10 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import DATA, RESOLUTION, RUN_TYPES, STAGE, STATE, STREAMS, flat, hms, load, pace, save  # noqa: E402
+from common import DATA, RESOLUTION, RUN_TYPES, STAGE, STATE, STREAMS, flat, hms, load, pace, perf_of, save  # noqa: E402
 
 WINDOW_DAYS = 14  # on relit les 14 derniers jours : titres, descriptions et kudos changent après coup
+BACKLOG = 20  # anciennes sorties complétées chaque nuit (tours et meilleurs efforts ; réponses longues)
 
 
 def window_start():
@@ -82,7 +84,7 @@ def from_transcripts(max_age_h):
                         continue
                     if b.get('type') == 'tool_use':
                         name = b.get('name', '')
-                        for tool in ('list_activities', 'get_activity_streams', 'get_athlete_zones'):
+                        for tool in ('list_activities', 'get_activity_streams', 'get_athlete_zones', 'get_activity_performance'):
                             if name.endswith(tool) and 'strava' in name.lower():
                                 uses[b.get('id')] = (tool, b.get('input') or {})
                     elif b.get('type') == 'tool_result' and b.get('tool_use_id') in uses and not b.get('is_error'):
@@ -134,6 +136,8 @@ def from_raw():
             calls.append(('get_activity_streams', {'activity_id': p.stem.split('_', 1)[1], 'resolution': RESOLUTION}, out))
         elif p.name.startswith('zones'):
             calls.append(('get_athlete_zones', {}, out))
+        elif p.name.startswith('perf_'):
+            calls.append(('get_activity_performance', {'activity_id': p.stem.split('_', 1)[1]}, out))
     return calls
 
 
@@ -149,16 +153,18 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--plan', action='store_true', help='affiche la fenêtre à relire et s’arrête')
     ap.add_argument('--hours', type=float, default=12, help='âge maximal des journaux de session lus')
+    ap.add_argument('--backlog', type=int, default=BACKLOG, help='anciennes sorties à compléter (tours, records)')
     args = ap.parse_args()
 
     start = window_start()
     if args.plan:
         print(f'Fenêtre à relire : depuis {start}')
-        print(f'→ list_activities(range_start="{start}", ordering="StartDateLocalAsc", first=100) ; paginer avec after=end_cursor tant que has_next_page')
+        print(f'→ list_activities(range_start="{start}", ordering="StartDateLocalAsc", first=100, include_polyline=true) ; '
+              'paginer avec after=end_cursor tant que has_next_page')
         return
 
     calls = from_transcripts(args.hours) + from_raw()
-    acts, streams, zones, desc, trainer = {}, {}, None, {}, {}
+    acts, streams, zones, desc, trainer, routes, perf = {}, {}, None, {}, {}, {}, {}
     for tool, inp, out in calls:
         if tool == 'list_activities':
             for a in out.get('activities') or []:
@@ -168,6 +174,12 @@ def main():
                 acts[f['id']] = f
                 desc[f['id']] = (a.get('description') or '').strip()
                 trainer[f['id']] = bool(a.get('is_trainer'))
+                if a.get('reduced_polyline') and f['sport_type'] in RUN_TYPES:
+                    routes[f['id']] = a['reduced_polyline']
+        elif tool == 'get_activity_performance':
+            aid = str(inp.get('activity_id') or '')
+            if aid:
+                perf[aid] = perf_of(out)
         elif tool == 'get_activity_streams':
             aid = str(inp.get('activity_id') or '')
             if not aid:
@@ -184,6 +196,13 @@ def main():
 
     STAGE.mkdir(exist_ok=True)
     (STAGE / 'streams').mkdir(exist_ok=True)
+    (STAGE / 'perf').mkdir(exist_ok=True)
+    for aid, pf in perf.items():
+        save(STAGE / 'perf' / f'{aid}.json', pf, compact=True)
+    staged_routes = load(STAGE / 'routes.json', {})
+    staged_routes.update(routes)
+    if staged_routes:
+        save(STAGE / 'routes.json', staged_routes, compact=True)
     in_window = {k: v for k, v in acts.items() if v['start_local'] >= start}
     save(STAGE / 'activities.json', {'window_start': start, 'activities': list(acts.values()),
                                      'descriptions': desc, 'is_trainer': trainer})
@@ -216,6 +235,29 @@ def main():
         print('  ' + ' '.join(todo))
     else:
         print('Aucun flux cardio à récupérer.')
+
+    # ----- tours et meilleurs efforts : les nouvelles sorties, puis l'arriéré (les plus récentes d'abord) -----
+    done = {r['id'] for r in load(DATA / 'laps.json', [])} | set(state.get('perf_empty', []))
+    staged_perf = {p.stem for p in (STAGE / 'perf').glob('*.json')}
+    allruns = sorted([a for a in {**known, **acts}.values() if a['sport_type'] in RUN_TYPES],
+                     key=lambda a: a['start_local'], reverse=True)
+    missing = [a['id'] for a in allruns if a['id'] not in done and a['id'] not in staged_perf]
+    fresh = [i for i in missing if i in acts and i not in known]
+    rest = [i for i in missing if i not in fresh]
+    quota = max(0, args.backlog - len([i for i in staged_perf if i in known]))  # l'arriéré déjà traité cette session compte
+    perf_todo = fresh + rest[:quota]
+    print(f'Tours et records : {len(done)} sorties complètes, {len(staged_perf)} en attente, {len(missing)} restantes.')
+    if perf_todo:
+        print(f'À récupérer ({len(perf_todo)}) : get_activity_performance(activity_id=…), une à la fois, '
+              'et relancer ce script toutes les 10 sorties, pour :')
+        print('  ' + ' '.join(perf_todo))
+    else:
+        print('Aucun tour ni record à récupérer cette fois.')
+    have_routes = {r['id'] for r in load(DATA / 'routes.json', [])} | set(staged_routes)
+    no_route = [a['id'] for a in allruns if a['id'] not in have_routes]
+    print(f'Tracés GPS : {len(have_routes)} connus · {len(no_route)} sorties sans tracé'
+          + (' : rattrapage à faire avec list_activities(first=100, include_polyline=true, ordering="StartDateLocalAsc") '
+             'sur tout l’historique, en paginant' if len(no_route) > 50 else ' (tapis ou GPS coupé)' if no_route else ''))
 
     write_review(start, acts, desc, trainer, streams, known, rows)
     print(f'Fiche d’analyse : {STAGE / "review.md"}')

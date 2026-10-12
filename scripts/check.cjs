@@ -6,7 +6,11 @@ const vm = require('vm');
 
 const root = path.resolve(__dirname, '..');
 const dir = path.resolve(process.argv[2] || path.join(root, 'docs', 'data'));
-const read = (f) => JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
+const read = (f, dflt) => {
+  const p = path.join(dir, f);
+  if (dflt !== undefined && !fs.existsSync(p)) return dflt;
+  return JSON.parse(fs.readFileSync(p, 'utf8'));
+};
 const problems = [];
 
 const data = {
@@ -15,6 +19,10 @@ const data = {
   hr_streams: read('hr_streams.json'),
   hr_zones: read('hr_zones.json'),
   meta: read('meta.json'),
+  routes: read('routes.json', []),
+  laps: read('laps.json', []),
+  efforts: read('efforts.json', []),
+  goal: read('goal.json', []),
 };
 
 // ----- cohérence des fichiers -----
@@ -34,11 +42,18 @@ for (const r of data.hr_streams) {
   if (!ids.has(r.id)) { problems.push(`flux cardio sans activité : ${r.id}`); break; }
 }
 if (data.hr_zones.length !== 5) problems.push('il faut 5 zones cardio');
+for (const k of ['routes', 'laps', 'efforts']) {
+  const bad = data[k].find((r) => !ids.has(r.id));
+  if (bad) problems.push(`${k} : activité inconnue ${bad.id}`);
+}
+if (data.routes.some((r) => typeof r.p !== 'string' || !r.p)) problems.push('routes : tracé vide');
+if (data.laps.some((r) => !(r.d >= 0) || !(r.mt >= 0))) problems.push('laps : tour sans distance ou sans durée');
+if (data.efforts.some((r) => !r.e || !(r.s > 0))) problems.push('efforts : effort invalide');
 
 // ----- calculs du site -----
 const defs = new Map();
 global.dash = { calc: (id, def) => defs.set(id, { inputs: [], ...def }), colors: [] };
-for (const f of ['calcs.js', 'calcs_hr.js']) {
+for (const f of fs.readdirSync(path.join(root, 'docs', 'assets')).filter((n) => /^calcs.*\.js$/.test(n)).sort()) {
   vm.runInThisContext(fs.readFileSync(path.join(root, 'docs', 'assets', f), 'utf8'), { filename: f });
 }
 const cache = {};

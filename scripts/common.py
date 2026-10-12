@@ -86,3 +86,29 @@ def hms(sec):
     t = round(sec)
     h, m, s = t // 3600, t % 3600 // 60, t % 60
     return f'{h}h{m:02d}\'{s:02d}"' if h else f'{m}\'{s:02d}"'
+
+
+EFFORT_NAMES = {  # meilleurs efforts Strava → libellés du site
+    'Fastest400': '400 m', 'FastestHalfMile': '800 m', 'Fastest1k': '1 km', 'FastestMile': '1 mile',
+    'Fastest2Mile': '2 miles', 'Fastest5k': '5 km', 'Fastest10k': '10 km', 'Fastest15k': '15 km',
+    'Fastest10Mile': '10 miles', 'Fastest20k': '20 km', 'FastestHalfMarathon': 'Semi', 'Fastest30k': '30 km',
+    'FastestMarathon': 'Marathon',
+}
+
+
+def perf_of(out):
+    """Réponse de get_activity_performance → tours et meilleurs efforts (les segments sont ignorés)."""
+    def r(v, n=1):
+        return round(v, n) if isinstance(v, (int, float)) else None
+
+    efforts = {}
+    for e in out.get('best_efforts') or []:
+        name = EFFORT_NAMES.get(e.get('type_value') or e.get('name'), e.get('display_text'))
+        if name and isinstance(e.get('value'), (int, float)):
+            efforts[name] = int(e['value'])
+    laps = [{
+        'd': r(l.get('distance')), 'mt': l.get('moving_time'), 'et': l.get('elapsed_time'),
+        'hr': r(l.get('avg_hr')), 'hrmax': l.get('max_hr'), 'cad': r(l.get('avg_cadence')),
+        'el': r(l.get('elevation_gain')), 'g': r(l.get('avg_grade'), 2),
+    } for l in out.get('laps') or []]
+    return {'efforts': efforts, 'laps': laps}

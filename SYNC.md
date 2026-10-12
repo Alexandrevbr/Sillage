@@ -23,13 +23,15 @@ Règles d’or :
 
 2. **Activités**
 
-   Appeler `list_activities(range_start=<date>, ordering="StartDateLocalAsc", first=100)`.
-   Tant que `has_next_page` est vrai, rappeler avec `after=<end_cursor>`.
+   Appeler `list_activities(range_start=<date>, ordering="StartDateLocalAsc", first=100, include_polyline=true)`.
+   Tant que `has_next_page` est vrai, rappeler avec `after=<end_cursor>`. Le tracé GPS
+   (`reduced_polyline`) sert à la carte du site.
 
 3. **Inventaire**
 
    Lancer `python3 scripts/harvest.py`. Il relit les réponses du connecteur dans le journal de
-   la session et liste les flux cardio à récupérer.
+   la session. Il liste ensuite les flux cardio à récupérer, puis les tours et records à récupérer :
+   d’abord les nouvelles sorties, puis 20 anciennes sorties à compléter.
 
 4. **Flux cardio**
 
@@ -39,35 +41,56 @@ Règles d’or :
      (:00, :15, :30, :45).
    - Une sortie sans cardio est normale : elle sera notée et ne sera plus redemandée.
 
-5. **Zones cardio**
+5. **Tours et records**
+
+   Pour chaque id listé, appeler `get_activity_performance(activity_id=<id>)`, une sortie à la
+   fois.
+   - La réponse est longue (segments), n’en recopier rien : le script la relit dans le journal.
+   - Toutes les 10 sorties, relancer `python3 scripts/harvest.py`. Il met les réponses déjà
+     reçues à l’abri et raccourcit la liste.
+   - Même limite Strava qu’à l’étape 4.
+
+6. **Zones cardio**
 
    Appeler `get_athlete_zones()` une fois.
 
-6. **Contrôle**
+7. **Contrôle**
 
-   Relancer `python3 scripts/harvest.py`. Il doit annoncer « Aucun flux cardio à récupérer ».
+   Relancer `python3 scripts/harvest.py`. Il doit annoncer « Aucun flux cardio à récupérer » et
+   « Aucun tour ni record à récupérer cette fois ».
 
-7. **Analyse des compétitions**
+8. **Analyse des compétitions**
 
    Lire `.sync/review.md`, puis écrire `.sync/decisions.json` (voir ci-dessous). Le fichier est
    obligatoire, même s’il n’y a aucune compétition.
 
-8. **Application**
+9. **Application**
 
    Lancer `python3 scripts/merge.py`. Il valide les décisions, met à jour `docs/data/`, recalcule
    tout le site avec `node scripts/check.cjs` et écrit le message de commit dans `.sync/commit.txt`.
 
-9. **Publication**
+10. **Publication**
 
-   Lancer `python3 scripts/publish.py`. Il régénère l’image d’aperçu, ajoute une ligne au journal
-   (`sync/journal.md`), committe et pousse sur `main`.
-   Le lancer après chaque `merge.py` réussi, même sans nouvelle sortie : la date de dernière synchro
-   affichée sur le site se met ainsi à jour.
+    Lancer `python3 scripts/publish.py`. Il régénère l’image d’aperçu, ajoute une ligne au journal
+    (`sync/journal.md`), committe et pousse sur `main`.
+    Le lancer après chaque `merge.py` réussi, même sans nouvelle sortie : la date de dernière synchro
+    affichée sur le site se met ainsi à jour.
 
-10. **Compte rendu**
+11. **Compte rendu**
 
     Trois lignes au plus : nouvelles sorties, compétitions ajoutées ou corrigées avec leur
     catégorie, et tout doute ou anomalie.
+
+### Rattrapage (lancements manuels)
+
+Une consigne de lancement peut demander un rattrapage plus gros. Dans ce cas, suivre les mêmes
+étapes, avec deux différences :
+
+- **Tours et records** : lancer `python3 scripts/harvest.py --backlog <N>` au lieu de
+  `harvest.py` à l’étape 3, et à chaque relance.
+- **Tracés GPS** : à l’étape 2, relire tout l’historique avec
+  `list_activities(first=100, include_polyline=true, ordering="StartDateLocalAsc", range_start="2018-01-01T00:00:00")`,
+  en paginant jusqu’au bout.
 
 ### Secours si le journal de session est illisible
 
@@ -76,6 +99,7 @@ cas, copier chaque réponse du connecteur **telle quelle** dans `.sync/raw/` :
 
 - `list_1.json`, `list_2.json`… pour `list_activities` ;
 - `streams_<id>.json` pour `get_activity_streams` ;
+- `perf_<id>.json` pour `get_activity_performance` ;
 - `zones.json` pour `get_athlete_zones`.
 
 Relancer ensuite `harvest.py`.

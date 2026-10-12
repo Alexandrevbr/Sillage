@@ -124,6 +124,37 @@ def main():
     order = {a['id']: i for i, a in enumerate(act_list)}
     row_list = [r for aid in sorted(by_id, key=lambda x: order.get(x, -1)) for r in by_id[aid]]
 
+    # ----- tracés GPS -----
+    routes = {r['id']: r['p'] for r in load(DATA / 'routes.json', [])}
+    staged_routes = load(STAGE / 'routes.json', {}) or {}
+    new_routes = [aid for aid, poly in staged_routes.items() if aid in acts and routes.get(aid) != poly]
+    routes.update({aid: staged_routes[aid] for aid in new_routes})
+    route_list = [{'id': aid, 'p': routes[aid]} for aid in sorted(routes, key=lambda x: order.get(x, -1)) if aid in acts]
+
+    # ----- tours et meilleurs efforts -----
+    laps_by, eff_by = {}, {}
+    for r in load(DATA / 'laps.json', []):
+        laps_by.setdefault(r['id'], []).append(r)
+    for r in load(DATA / 'efforts.json', []):
+        eff_by.setdefault(r['id'], []).append(r)
+    perf_empty = set(state.get('perf_empty', []))
+    new_perf = []
+    for p in sorted((STAGE / 'perf').glob('*.json')) if (STAGE / 'perf').exists() else []:
+        aid = p.stem
+        if aid not in acts:
+            continue
+        pf = load(p, {})
+        if not pf.get('laps') and not pf.get('efforts'):
+            perf_empty.add(aid)
+            continue
+        perf_empty.discard(aid)
+        if aid not in laps_by:
+            new_perf.append(aid)
+        laps_by[aid] = [{'id': aid, 'i': i, **lap} for i, lap in enumerate(pf.get('laps') or [])]
+        eff_by[aid] = [{'id': aid, 'e': name, 's': sec} for name, sec in (pf.get('efforts') or {}).items()]
+    by_order = lambda d: [r for aid in sorted(d, key=lambda x: order.get(x, -1)) if aid in acts for r in d[aid]]  # noqa: E731
+    lap_list, eff_list = by_order(laps_by), by_order(eff_by)
+
     # ----- zones -----
     new_zones = load(STAGE / 'zones.json')
     zones_changed = bool(new_zones) and new_zones != zones
@@ -151,7 +182,9 @@ def main():
 
     runs = [a for a in act_list if a['sport_type'] in RUN_TYPES]
     now = dt.datetime.now(dt.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+    perf_done = len(set(laps_by) | perf_empty)
     meta = [{'synced_at': now, 'activities': len(act_list), 'runs': len(runs), 'races': len(race_list),
+             'perf_runs': perf_done, 'routes': len(route_list),
              'hr_runs': len(by_id), 'last_activity': act_list[-1]['start_local'] if act_list else None}]
 
     # ----- résumé -----
@@ -162,6 +195,10 @@ def main():
         lines.append(f'{len(changed)} activité(s) mise(s) à jour')
     if new_streams:
         lines.append(f'{len(new_streams)} sortie(s) avec cardio ajoutée(s)')
+    if new_perf:
+        lines.append(f'tours et records de {len(new_perf)} sortie(s) ({perf_done}/{len(runs)} complètes)')
+    if new_routes:
+        lines.append(f'{len(new_routes)} tracé(s) GPS ({len(route_list)} au total)')
     if race_added:
         lines.append('compétition(s) ajoutée(s) : ' + ', '.join(f"{r['event']} ({r['category']})" for r in race_added))
     if race_updated:
@@ -190,14 +227,18 @@ def main():
         save(t / 'hr_streams.json', row_list)
         save(t / 'hr_zones.json', zones)
         save(t / 'meta.json', meta)
+        save(t / 'routes.json', route_list)
+        save(t / 'laps.json', lap_list)
+        save(t / 'efforts.json', eff_list)
         res = subprocess.run(['node', str(ROOT / 'scripts' / 'check.cjs'), str(t)], capture_output=True, text=True)
         print(res.stdout.strip())
         if res.returncode != 0:
             print(res.stderr.strip())
             fail('vérification en échec : docs/data/ n’a pas été modifié')
-        for name in ('activities.json', 'races.json', 'hr_streams.json', 'hr_zones.json', 'meta.json'):
+        for name in ('activities.json', 'races.json', 'hr_streams.json', 'hr_zones.json', 'meta.json',
+                     'routes.json', 'laps.json', 'efforts.json'):
             shutil.copyfile(t / name, DATA / name)
-    state.update({'last_sync': now, 'no_hr': sorted(no_hr)})
+    state.update({'last_sync': now, 'no_hr': sorted(no_hr), 'perf_empty': sorted(perf_empty)})
     save(STATE, state)
     (STAGE / 'commit.txt').write_text(title + '\n\n' + body + '\n', encoding='utf-8')
     print('✓ docs/data/ à jour · message de commit dans .sync/commit.txt')
