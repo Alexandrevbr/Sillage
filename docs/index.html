@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Sillage · Mes courses</title>
-<meta name="description" content="Toutes mes sorties Strava depuis 2018 : volume, allures, cardio, dénivelé et compétitions, mis à jour chaque nuit.">
+<meta name="description" content="Toutes mes sorties Strava depuis 2018 : volume, allures, cardio, compétitions, préparation de mon prochain objectif et carte de mes parcours, mis à jour chaque nuit.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#f9f9f7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0b0b0b" media="(prefers-color-scheme: dark)">
@@ -16,7 +16,7 @@
 <meta property="og:locale" content="fr_FR">
 <meta property="og:site_name" content="Sillage">
 <meta property="og:title" content="Sillage · Mes courses">
-<meta property="og:description" content="Toutes mes sorties Strava depuis 2018 : volume, allures, cardio, dénivelé et compétitions, mis à jour chaque nuit.">
+<meta property="og:description" content="Toutes mes sorties Strava depuis 2018 : volume, allures, cardio, compétitions, préparation de mon prochain objectif et carte de mes parcours, mis à jour chaque nuit.">
 <meta property="og:url" content="https://sillage.alexandrebarreau.fr/">
 <meta property="og:image" content="https://sillage.alexandrebarreau.fr/assets/og.png">
 <meta property="og:image:width" content="1200">
@@ -728,6 +728,207 @@
     @keyframes sr-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
   }
 </style>
+<style>
+  /* ---------- Objectif ---------- */
+  .sr-goal {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    border: 1px solid var(--color-border-line);
+    border-radius: calc(var(--cds-radius) * 2);
+    background: var(--color-panel);
+    padding: clamp(18px, 3.4cqi, 36px);
+    display: grid;
+    gap: clamp(14px, 2.4cqi, 24px);
+    min-height: 200px;
+  }
+  .sr-goal::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(60% 120% at 100% 0%, color-mix(in srgb, var(--sr-accent) 16%, transparent), transparent 70%),
+      radial-gradient(50% 90% at 0% 100%, color-mix(in srgb, var(--sr-blue) 9%, transparent), transparent 70%);
+  }
+  .sr-goal.dash-skeleton::before { display: none; }
+  .sr-goal--empty { min-height: 0; }
+  .sr-goal__result { margin-top: 4px; }
+  .sr-goal__head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px 28px; }
+  .sr-goal__title { min-width: 0; }
+  .sr-goal__event {
+    font-family: var(--font-anthropic-serif);
+    font-weight: 400;
+    font-size: clamp(1.9rem, 5.4cqi, 3.1rem);
+    line-height: 1.04;
+    letter-spacing: -.012em;
+    margin: 8px 0 10px;
+  }
+  .sr-goal__target { font-size: var(--cds-font-size-body); color: var(--color-fg-muted); }
+  .sr-goal__target b { color: var(--color-fg); font-weight: var(--cds-font-weight-medium); font-variant-numeric: tabular-nums; }
+  .sr-goal__count { display: grid; justify-items: end; text-align: right; }
+  .sr-goal__j {
+    font-family: var(--font-anthropic-serif);
+    font-size: clamp(2.6rem, 7.4cqi, 4.4rem);
+    line-height: .95;
+    color: var(--sr-accent);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.02em;
+  }
+  .sr-goal__date { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); margin-top: 6px; }
+  @container sr (max-width: 560px) {
+    .sr-goal__count { justify-items: start; text-align: left; }
+  }
+  .sr-goal__scale { position: relative; }
+  .sr-goal__scale text { font-family: var(--font-anthropic-sans); }
+
+  /* ---------- Tuiles d’état ---------- */
+  .sr-tile__sub b { color: var(--color-fg); font-weight: var(--cds-font-weight-medium); }
+  /* Sur téléphone, les tuiles vont par deux. */
+  @container sr (max-width: 560px) {
+    .sr-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .sr-tile { padding: var(--cds-pad-sm) var(--cds-pad-md); }
+    .sr-tile__value { font-size: 1.5rem; }
+  }
+  .sr-tile--warn .sr-tile__label::before, .sr-tile--good .sr-tile__label::before {
+    content: "";
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: 1px;
+  }
+  .sr-tile--warn .sr-tile__label::before { background: var(--sr-accent); }
+  .sr-tile--good .sr-tile__label::before { background: var(--color-ok); }
+
+  /* ---------- Calendrier des courses ---------- */
+  .sr-cal { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; align-content: start; }
+  .sr-cal__item {
+    display: grid;
+    grid-template-columns: 4.4rem minmax(0, 1fr);
+    gap: 2px 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--sr-line);
+    border-radius: var(--cds-radius);
+  }
+  .sr-cal__item.is-goal {
+    border-color: color-mix(in srgb, var(--sr-accent) 50%, var(--color-border-line));
+    background: color-mix(in srgb, var(--sr-accent) 7%, transparent);
+  }
+  .sr-cal__when { grid-row: span 2; display: grid; align-content: start; }
+  .sr-cal__j { font-family: var(--font-anthropic-serif); font-size: 1.35rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .sr-cal__date { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+  .sr-cal__what { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; min-width: 0; }
+  .sr-cal__event { font-weight: var(--cds-font-weight-medium); }
+  .sr-cal__role { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+  .sr-cal__gap { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+  .sr-cal__gap b { color: var(--color-fg); font-weight: var(--cds-font-weight-medium); }
+  .sr-cal__gap.is-tight b { color: var(--sr-accent); }
+
+  /* ---------- Listes à choisir (séances, compétitions de la carte) ---------- */
+  .sr-qlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; align-content: start; max-height: 430px; overflow: auto; margin-inline: -6px; padding-inline: 6px; }
+  .sr-qlist--tall { max-height: 640px; }
+  .sr-qbtn {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 10px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: var(--cds-radius);
+    cursor: pointer;
+    transition: background-color 120ms;
+  }
+  .sr-qbtn:hover { background: color-mix(in srgb, var(--color-fg) 4%, transparent); }
+  .sr-qbtn[aria-pressed="true"] { background: color-mix(in srgb, var(--color-fg) 7%, transparent); box-shadow: inset 0 0 0 1px var(--sr-line); }
+  .sr-qbtn:focus-visible { outline: 2px solid var(--sr-blue); outline-offset: 1px; }
+  .sr-qbtn__main { display: grid; min-width: 0; }
+  .sr-qbtn .sr-list__name { display: block; }
+  .sr-qbtn .sr-list__value { text-align: right; }
+  .sr-qbtn .sr-list__value small { display: block; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); font-weight: 400; }
+  .sr-list .sr-sw { justify-self: center; }
+
+  /* ---------- Divers ---------- */
+  .sr-empty {
+    min-height: min(var(--h, 120px), 170px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: var(--cds-pad-md);
+    color: var(--color-fg-muted);
+    font-size: var(--cds-font-size-body);
+  }
+  .sr-cell-sub { display: block; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+  .sr-table td b { font-weight: var(--cds-font-weight-medium); }
+  .sr-table--tight td.sr-l { min-width: 0; }
+  .sr-table--tight th, .sr-table--tight td { padding-left: 6px; padding-right: 6px; }
+  .sr-section { scroll-margin-top: 72px; }
+
+  /* ---------- Carte ---------- */
+  .sr-map {
+    position: relative;
+    z-index: 0;
+    height: clamp(380px, 62vh, 620px);
+    border-radius: var(--cds-radius);
+    overflow: hidden;
+    border: 1px solid var(--sr-line);
+    background: color-mix(in srgb, var(--color-fg) 4%, transparent);
+  }
+  .sr .sr-map .leaflet-container { font: inherit; font-size: var(--cds-font-size-caption); background: transparent; }
+  .sr .sr-map .leaflet-bar { border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); box-shadow: var(--cds-shadow-popover); overflow: hidden; }
+  .sr .sr-map .leaflet-bar a { background: var(--color-panel); color: var(--color-fg); border-bottom-color: var(--sr-line); }
+  .sr .sr-map .leaflet-bar a:hover { background: color-mix(in srgb, var(--color-fg) 6%, var(--color-panel)); }
+  .sr .sr-map .leaflet-control-attribution { background: color-mix(in srgb, var(--color-panel) 82%, transparent); color: var(--color-fg-muted); }
+  .sr .sr-map .leaflet-control-attribution a { color: var(--color-fg-muted); }
+  .sr .sr-map .leaflet-interactive { cursor: pointer; }
+  .sr .sr-map.is-locked .leaflet-interactive { cursor: grab; }
+  .sr-maphint {
+    position: absolute;
+    left: 50%;
+    bottom: 26px;
+    z-index: 800;
+    transform: translateX(-50%);
+    pointer-events: none;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-panel) 88%, transparent);
+    border: 1px solid var(--sr-line);
+    color: var(--color-fg-muted);
+    font-size: var(--cds-font-size-caption);
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 200ms;
+  }
+  .sr-maphint.is-on { opacity: 1; }
+  .sr-mapinfo { min-height: 2.6rem; font-size: var(--cds-font-size-body); color: var(--color-fg-muted); display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; }
+  .sr-mapinfo b { color: var(--color-fg); font-weight: var(--cds-font-weight-medium); font-variant-numeric: tabular-nums; }
+  .sr-mapinfo__title { color: var(--color-fg); font-weight: var(--cds-font-weight-medium); }
+  .sr-mapinfo button {
+    appearance: none;
+    font: inherit;
+    font-size: var(--cds-font-size-caption);
+    color: var(--color-fg);
+    background: transparent;
+    border: 1px solid var(--color-border-line);
+    border-radius: 999px;
+    padding: 3px 11px;
+    cursor: pointer;
+    margin-left: auto;
+  }
+  .sr-mapinfo button:focus-visible { outline: 2px solid var(--sr-blue); outline-offset: 2px; }
+  .sr-mapgrid { align-items: start; }
+  @container sr (max-width: 560px) { .sr-map { height: min(112vw, 460px); } }
+  #card-map { scroll-margin-top: 64px; }
+</style>
 </head>
 <body>
 <main class="page">
@@ -795,12 +996,16 @@
 
   <nav class="sr-tabs" role="tablist" aria-label="Sections du tableau de bord">
     <button class="sr-tab" role="tab" id="tab-apercu" data-page="apercu" aria-controls="apercu" aria-selected="true">Vue d’ensemble</button>
+    <button class="sr-tab" role="tab" id="tab-objectif" data-page="objectif" aria-controls="objectif" aria-selected="false" tabindex="-1">Objectif</button>
+    <button class="sr-tab" role="tab" id="tab-entrainement" data-page="entrainement" aria-controls="entrainement" aria-selected="false" tabindex="-1">Entraînement</button>
+    <button class="sr-tab" role="tab" id="tab-seances" data-page="seances" aria-controls="seances" aria-selected="false" tabindex="-1">Séances</button>
     <button class="sr-tab" role="tab" id="tab-annees" data-page="annees" aria-controls="annees" aria-selected="false" tabindex="-1">Année par année</button>
     <button class="sr-tab" role="tab" id="tab-distances" data-page="distances" aria-controls="distances" aria-selected="false" tabindex="-1">Distances &amp; D+</button>
     <button class="sr-tab" role="tab" id="tab-cardio" data-page="cardio" aria-controls="cardio" aria-selected="false" tabindex="-1">Cardio</button>
     <button class="sr-tab" role="tab" id="tab-croise" data-page="croise" aria-controls="croise" aria-selected="false" tabindex="-1">Analyses croisées</button>
     <button class="sr-tab" role="tab" id="tab-competitions" data-page="competitions" aria-controls="competitions" aria-selected="false" tabindex="-1">Compétitions</button>
     <button class="sr-tab" role="tab" id="tab-habitudes" data-page="habitudes" aria-controls="habitudes" aria-selected="false" tabindex="-1">Habitudes</button>
+    <button class="sr-tab" role="tab" id="tab-carte" data-page="carte" aria-controls="carte" aria-selected="false" tabindex="-1">Carte</button>
   </nav>
 
   <!-- ====================== Vue d’ensemble ====================== -->
@@ -878,6 +1083,233 @@
         <div class="sr-legend" id="cal-legend"></div>
       </div>
     </article>
+  </section>
+
+  <!-- ====================== Objectif ====================== -->
+  <section class="sr-page" id="objectif" role="tabpanel" aria-labelledby="tab-objectif" hidden>
+    <div class="sr-goal dash-skeleton" id="goal-hero" data-source="goal_info goal_predict race_best"></div>
+    <div class="sr-tiles dash-skeleton" id="goal-tiles" data-source="goal_info goal_predict goal_build goal_weeks long_summary" style="min-height: 92px"></div>
+
+    <div class="sr-grid sr-grid--wide">
+      <article class="sr-card" id="card-goalbuild">
+        <div class="sr-card__head">
+          <div>
+            <h3 class="sr-card__title">La forme, jour après jour</h3>
+            <p class="sr-card__note">Forme (charge moyenne des 42 derniers jours) sur les 120 jours avant la course, comparée à la préparation de la dernière édition</p>
+          </div>
+          <div class="sr-legend" id="goalbuild-legend"></div>
+        </div>
+        <div class="sr-chart dash-skeleton" id="c-goalbuild" data-source="goal_build goal_info" style="--h: 260px"></div>
+      </article>
+      <article class="sr-card" id="card-goalcal">
+        <div class="sr-card__head">
+          <div>
+            <h3 class="sr-card__title">Les courses d’ici là</h3>
+            <p class="sr-card__note">Calendrier à venir et jours de récupération entre deux courses</p>
+          </div>
+        </div>
+        <ol class="sr-cal dash-skeleton" id="c-goalcal" data-source="goal_calendar" style="min-height: 180px"></ol>
+      </article>
+    </div>
+
+    <div class="sr-grid sr-grid--wide">
+      <article class="sr-card" id="card-goalweeks">
+        <div class="sr-card__head">
+          <div>
+            <h3 class="sr-card__title">Les 16 semaines de préparation</h3>
+            <p class="sr-card__note">Km par semaine avant la course (S-1 = les 7 derniers jours), comparés à la dernière édition · la semaine en cours est en clair</p>
+          </div>
+          <div class="sr-legend" id="goalweeks-legend"></div>
+        </div>
+        <div class="sr-chart dash-skeleton" id="c-goalweeks" data-source="goal_weeks goal_info" style="--h: 260px"></div>
+      </article>
+      <article class="sr-card" id="card-goalsplits">
+        <div class="sr-card__head">
+          <div>
+            <h3 class="sr-card__title">Temps de passage</h3>
+            <p class="sr-card__note" id="goalsplits-note">À allure régulière</p>
+          </div>
+        </div>
+        <div class="sr-tablewrap">
+          <table class="sr-table sr-table--tight" id="t-goalsplits" data-source="goal_info race_best">
+            <thead><tr><th class="sr-l">Passage</th><th>Objectif</th></tr></thead>
+            <tbody class="dash-skeleton"></tbody>
+          </table>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ====================== Entraînement ====================== -->
+  <section class="sr-page" id="entrainement" role="tabpanel" aria-labelledby="tab-entrainement" hidden>
+    <p class="sr-lead dash-skeleton" id="train-lead" data-source="easy_summary vol_summary recov_summary"></p>
+
+    <div class="sr-section" id="zone-grise">
+      <h2 class="sr-h2">Zone grise</h2>
+      <p class="sr-section__note">Mes footings sont-ils vraiment faciles ?</p>
+    </div>
+    <div class="sr-tiles dash-skeleton" id="easy-tiles" data-source="easy_summary" style="min-height: 92px"></div>
+    <div class="sr-grid sr-grid--wide">
+      <article class="sr-card" id="card-easyweeks">
+        <div class="sr-card__head">
+          <div>
+            <h3 class="sr-card__title">Mes footings, semaine par semaine</h3>
+            <p class="sr-card__note">Part du temps au-dessus de la zone 2 : facile sous 10 %, limite de 10 à 30 %, zone grise au-delà · footing = ni séance ni compétition · 26 dernières semaines</p>
+          </div>
+          <div class="sr-legend" id="easyweeks-legend"></div>
+        </div>
+        <div class="sr-chart dash-skeleton" id="c-easyweeks" data-source="easy_weeks" style="--h: 230px"></div>
+      </article>
+      <article class="sr-card" id="card-easylist">
+        <div class="sr-card__head">
+          <div>
+            <h3 class="sr-card__title">Derniers footings en zone grise</h3>
+            <p class="sr-card__note">Distance, allure et FC moyenne</p>
+          </div>
+        </div>
+        <ol class="sr-list dash-skeleton" id="c-easylist" data-source="easy_runs_class" style="min-height: 200px"></ol>
+      </article>
+    </div>
+
+    <div class="sr-section" id="volume">
+      <h2 class="sr-h2">Volume et sorties longues</h2>
+      <p class="sr-section__note">Combien je cours, et ce que ça donne le jour de la course</p>
+    </div>
+    <div class="sr-tiles dash-skeleton" id="vol-tiles" data-source="vol_summary" style="min-height: 92px"></div>
+    <article class="sr-card" id="card-vol">
+      <div class="sr-card__head">
+        <div>
+          <h3 class="sr-card__title">Volume glissant</h3>
+          <p class="sr-card__note">Km par semaine sur 18 mois · en bleu, les semaines à 90 km et plus</p>
+        </div>
+        <div class="sr-seg" role="group" aria-label="Moyenne glissante" id="vol-avg">
+          <button type="button" data-v="avg4" aria-pressed="false">4 sem.</button>
+          <button type="button" data-v="avg8" aria-pressed="true">8 sem.</button>
+          <button type="button" data-v="avg13" aria-pressed="false">13 sem.</button>
+        </div>
+      </div>
+      <div class="sr-legend" id="vol-legend"></div>
+      <div class="sr-chart dash-skeleton" id="c-vol" data-source="vol_weeks" style="--h: 280px"></div>
+    </article>
+    <div class="sr-grid">
+      <article class="sr-card" id="card-volrace">
+        <div class="sr-card__head">
+          <div>
+            <h3 class="sr-card__title">Volume et niveau en course</h3>
+            <p class="sr-card__note">Une course sur route par point : km par semaine sur les 8 semaines d’avant, et VDOT obtenu</p>
+          </div>
+          <div class="sr-legend" id="volrace-legend"></div>
+        </div>
+        <div class="sr-chart dash-skeleton" id="c-volrace" data-source="vol_race vol_summary" style="--h: 280px"></div>
+      </article>
+      <article class="sr-card" id="card-long">
+        <div class="sr-card__head">
+          <div>
+            <h3 class="sr-card__title">Sorties longues</h3>
+            <p class="sr-card__note">Toutes les sorties de 18 km et plus depuis 2024 · gros points : 25 km et plus</p>
+          </div>
+          <div class="sr-legend" id="long-legend"></div>
+        </div>
+        <div class="sr-chart dash-skeleton" id="c-long" data-source="long_runs" style="--h: 280px"></div>
+      </article>
+    </div>
+
+    <div class="sr-section" id="recuperation">
+      <h2 class="sr-h2">Récupération et enchaînement des courses</h2>
+      <p class="sr-section__note">Le temps que je laisse entre une course et la séance dure suivante</p>
+    </div>
+    <div class="sr-tiles dash-skeleton" id="recov-tiles" data-source="recov_summary" style="min-height: 92px"></div>
+    <div class="sr-grid">
+      <article class="sr-card" id="card-recov">
+        <div class="sr-card__head">
+          <div>
+            <h3 class="sr-card__title">Retour à l’intensité après chaque course</h3>
+            <p class="sr-card__note">Jours avant la séance dure suivante (séance de qualité, course ou sortie d’effort relatif 70 et plus) · courses depuis 2024</p>
+          </div>
+          <div class="sr-legend" id="recov-legend"></div>
+        </div>
+        <div class="sr-chart dash-skeleton" id="c-recov" data-source="recov" style="--h: 240px"></div>
+      </article>
+      <article class="sr-card" id="card-density">
+        <div class="sr-card__head">
+          <div>
+            <h3 class="sr-card__title">Courses rapprochées</h3>
+            <p class="sr-card__note">Pour chaque semaine, nombre de courses sur les 8 semaines qui la terminent · en pointillés, avec le calendrier à venir</p>
+          </div>
+          <div class="sr-legend" id="density-legend"></div>
+        </div>
+        <div class="sr-chart dash-skeleton" id="c-density" data-source="race_density" style="--h: 240px"></div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ====================== Séances ====================== -->
+  <section class="sr-page" id="seances" role="tabpanel" aria-labelledby="tab-seances" hidden>
+    <div class="sr-section" id="seances-cles">
+      <h2 class="sr-h2">Séances clés</h2>
+      <p class="sr-section__note" id="laps-cov" data-source="laps_coverage">Repérées avec les tours de la montre</p>
+    </div>
+    <article class="sr-card" id="card-qweeks">
+      <div class="sr-card__head">
+        <div>
+          <h3 class="sr-card__title">Séances dures par semaine</h3>
+          <p class="sr-card__note">D’après les tours de la montre, ou le cardio quand ils manquent · losange : compétition · pointillé : 2 séances par semaine · 26 dernières semaines</p>
+        </div>
+        <div class="sr-legend" id="qweeks-legend"></div>
+      </div>
+      <div class="sr-chart dash-skeleton" id="c-qweeks" data-source="quality_weeks" style="--h: 230px"></div>
+    </article>
+    <div class="sr-grid">
+      <article class="sr-card" id="card-qlist">
+        <div class="sr-card__head">
+          <div>
+            <h3 class="sr-card__title">Dernières séances</h3>
+            <p class="sr-card__note">6 derniers mois · allure moyenne des répétitions à droite · touchez une séance pour son détail</p>
+          </div>
+        </div>
+        <ol class="sr-qlist dash-skeleton" id="c-qlist" data-source="quality_list" style="min-height: 200px"></ol>
+      </article>
+      <article class="sr-card" id="card-qreps">
+        <div class="sr-card__head">
+          <div>
+            <h3 class="sr-card__title" id="qreps-title">Détail d’une séance</h3>
+            <p class="sr-card__note" id="qreps-note">Allure et FC de chaque répétition</p>
+          </div>
+        </div>
+        <div class="sr-chart dash-skeleton" id="c-qreps" data-source="quality_list" style="--h: 230px"></div>
+      </article>
+    </div>
+
+    <div class="sr-section" id="records-entrainement">
+      <h2 class="sr-h2">Records à l’entraînement</h2>
+      <p class="sr-section__note">Meilleurs efforts Strava, courses comprises</p>
+    </div>
+    <div class="sr-grid">
+      <article class="sr-card" id="card-efforts">
+        <div class="sr-card__head">
+          <div>
+            <h3 class="sr-card__title">Meilleurs temps par distance</h3>
+            <p class="sr-card__note">Record connu, meilleur temps des 12 derniers mois et des 30 derniers jours</p>
+          </div>
+        </div>
+        <div class="sr-tablewrap">
+          <table class="sr-table sr-table--tight" id="t-efforts" data-source="effort_best">
+            <thead><tr><th class="sr-l">Distance</th><th>Record</th><th class="sr-hide-sm">12 mois</th><th>30 jours</th></tr></thead>
+            <tbody class="dash-skeleton"></tbody>
+          </table>
+        </div>
+      </article>
+      <article class="sr-card" id="card-effmonth">
+        <div class="sr-card__head">
+          <div>
+            <h3 class="sr-card__title">Meilleure allure du mois</h3>
+            <p class="sr-card__note">Meilleur effort de chaque mois sur 1 km, 5 km et 10 km, en allure au kilomètre</p>
+          </div>
+          <div class="sr-legend" id="effmonth-legend"></div>
+        </div>
+        <div class="sr-chart dash-skeleton" id="c-effmonth" data-source="effort_monthly" style="--h: 260px"></div>
+      </article>
+    </div>
   </section>
 
   <!-- ====================== Année par année ====================== -->
@@ -1500,6 +1932,39 @@
     </article>
   </section>
 
+  <!-- ====================== Carte ====================== -->
+  <section class="sr-page" id="carte" role="tabpanel" aria-labelledby="tab-carte" hidden>
+    <div class="sr-grid sr-grid--wide sr-mapgrid">
+      <article class="sr-card" id="card-map">
+        <div class="sr-card__head">
+          <div>
+            <h3 class="sr-card__title">Toutes mes sorties</h3>
+            <p class="sr-card__note">Chaque trait est une sortie : plus c’est dense, plus j’y suis passé · touchez un tracé pour son détail</p>
+          </div>
+          <div class="sr-controls">
+            <div class="sr-seg" role="group" aria-label="Période" id="map-range"></div>
+            <div class="sr-seg" role="group" aria-label="Sorties affichées" id="map-kind">
+              <button type="button" data-v="all" aria-pressed="true">Toutes</button>
+              <button type="button" data-v="races" aria-pressed="false">Compétitions</button>
+            </div>
+          </div>
+        </div>
+        <p class="sr-stats" id="map-stats" aria-live="polite"></p>
+        <div class="sr-map dash-skeleton" id="c-map" data-source="map_runs"></div>
+        <div class="sr-mapinfo" id="map-info" aria-live="polite"></div>
+      </article>
+      <article class="sr-card" id="card-maprace">
+        <div class="sr-card__head">
+          <div>
+            <h3 class="sr-card__title">Le tracé de chaque compétition</h3>
+            <p class="sr-card__note" id="maprace-note">Touchez une course pour la voir sur la carte</p>
+          </div>
+        </div>
+        <ol class="sr-qlist sr-qlist--tall dash-skeleton" id="c-maprace" data-source="map_runs race_results" style="min-height: 200px"></ol>
+      </article>
+    </div>
+  </section>
+
   <p class="sr-footer">
     Données Strava mises à jour chaque nuit · dernière synchro le <span data-source="meta" data-field="synced_at" data-row="0" data-fmt="synced">—</span>
     · première sortie le <span data-source="totals" data-field="first_date" data-row="0" data-fmt="dlong">—</span>
@@ -1513,6 +1978,7 @@
 <script src="assets/dash.js"></script>
 <script src="assets/calcs.js"></script>
 <script src="assets/calcs_hr.js"></script>
+<script src="assets/calcs_train.js"></script>
 <script src="assets/kit.js"></script>
 <script>
   // Date et heure de la dernière synchro, à l’heure de Paris.
@@ -1525,6 +1991,8 @@
   })();
 </script>
 <script src="assets/cardio.js"></script>
+<script src="assets/train.js"></script>
+<script src="assets/map.js"></script>
 <script src="assets/app.js"></script>
 </body>
 </html>

@@ -57,11 +57,13 @@
     mon: df({ month: 'short' }),
     monyear: df({ month: 'short', year: 'numeric' }),
   };
-  SR.dlong = (iso) => D.long.format(SR.utc(iso));
-  SR.dmed = (iso) => D.med.format(SR.utc(iso));
-  SR.dshort = (iso) => D.short.format(SR.utc(iso));
+  // « 1er octobre », comme on l’écrit en français (Intl donne « 1 octobre »).
+  const first = (s) => s.replace(/(^|\s)1(?=\s)/, '$11er');
+  SR.dlong = (iso) => first(D.long.format(SR.utc(iso)));
+  SR.dmed = (iso) => first(D.med.format(SR.utc(iso)));
+  SR.dshort = (iso) => first(D.short.format(SR.utc(iso)));
   SR.dday = (iso) => {
-    const s = D.day.format(SR.utc(iso));
+    const s = first(D.day.format(SR.utc(iso)));
     return s.charAt(0).toUpperCase() + s.slice(1);
   };
   SR.dmonth = (iso) => {
