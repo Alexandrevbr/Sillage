@@ -13,6 +13,7 @@ Produit dans .sync/ : activities.json, streams/<id>.json, zones.json et review.m
 import argparse
 import datetime as dt
 import json
+import re
 import statistics
 import sys
 import time
@@ -85,16 +86,35 @@ def from_transcripts(max_age_h):
                             if name.endswith(tool) and 'strava' in name.lower():
                                 uses[b.get('id')] = (tool, b.get('input') or {})
                     elif b.get('type') == 'tool_result' and b.get('tool_use_id') in uses and not b.get('is_error'):
-                        txt = text_of(b.get('content')).strip()
-                        if not txt.startswith('{'):
-                            continue
-                        try:
-                            out = json.loads(txt)
-                        except ValueError:
+                        out = parse_result(text_of(b.get('content')).strip())
+                        if out is None:
                             continue
                         tool, inp = uses[b['tool_use_id']]
                         calls.append((tool, inp, out))
     return calls
+
+
+def parse_result(txt):
+    """Réponse JSON en ligne, ou réponse trop longue que la session a enregistrée dans un fichier."""
+    if txt.startswith('{'):
+        try:
+            return json.loads(txt)
+        except ValueError:
+            return None
+    for p in re.findall(r'(/[^\s"\'<>()]+?\.(?:json|txt))', txt):
+        try:
+            raw = Path(p).read_text(encoding='utf-8', errors='replace').strip()
+            data = json.loads(raw)
+        except (OSError, ValueError):
+            continue
+        if isinstance(data, list):  # blocs de contenu [{type: text, text: …}]
+            try:
+                data = json.loads(text_of(data).strip())
+            except ValueError:
+                continue
+        if isinstance(data, dict):
+            return data
+    return None
 
 
 def from_raw():
