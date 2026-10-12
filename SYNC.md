@@ -116,6 +116,8 @@ montrent les compétitions déjà reconnues : s’en servir comme référence.
   bon signe.
 - Une description qui parle de dossard, de chrono officiel, de classement (« 5e », « 22e / 1 000 »)
   ou de podium.
+- Une course prévue ce jour-là au calendrier (`docs/data/goal.json`) : la fiche le signale. Si la
+  distance colle, reprendre son nom (`event`) et sa catégorie. Ne jamais modifier `goal.json`.
 
 **Indices de contexte**
 

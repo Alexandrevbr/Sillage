@@ -87,8 +87,11 @@ def from_transcripts(max_age_h):
                         for tool in ('list_activities', 'get_activity_streams', 'get_athlete_zones', 'get_activity_performance'):
                             if name.endswith(tool) and 'strava' in name.lower():
                                 uses[b.get('id')] = (tool, b.get('input') or {})
-                    elif b.get('type') == 'tool_result' and b.get('tool_use_id') in uses and not b.get('is_error'):
-                        out = parse_result(text_of(b.get('content')).strip())
+                    elif b.get('type') == 'tool_result' and b.get('tool_use_id') in uses:
+                        txt = text_of(b.get('content')).strip()
+                        if b.get('is_error') and 'saved to' not in txt:  # une réponse trop longue est « en erreur » mais enregistrée
+                            continue
+                        out = parse_result(txt)
                         if out is None:
                             continue
                         tool, inp = uses[b['tool_use_id']]
@@ -274,6 +277,7 @@ def avg_hr(aid, streams, rows):
 def write_review(start, acts, desc, trainer, streams, known, rows):
     races = load(DATA / 'races.json', [])
     by_race = {r['id']: r for r in races}
+    plan = {g['date']: g for g in load(DATA / 'goal.json', [])}
     allacts = {**known, **acts}
     runs_window = sorted((a for a in acts.values() if a['sport_type'] in RUN_TYPES and a['start_local'] >= start),
                          key=lambda a: a['start_local'])
@@ -317,6 +321,9 @@ def write_review(start, acts, desc, trainer, streams, known, rows):
                  f"lieu : {a.get('location_summary') or '—'} · nouvelle : {'oui' if a['id'] not in known else 'non'}")
         d = desc.get(a['id'])
         L.append(f'- Description : {d}' if d else '- Description : (aucune)')
+        g = plan.get(a['start_local'][:10])
+        if g:
+            L.append(f"- Course prévue ce jour-là au calendrier (goal.json) : {g['event']} · {g['category']} · {g['distance_km']} km")
         if status:
             L.append(f"- Déjà enregistrée comme compétition : {json.dumps(status, ensure_ascii=False)}")
         L.append('')
