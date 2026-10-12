@@ -204,6 +204,9 @@ def main():
     new = [a for a in acts.values() if a['id'] not in known]
 
     print(f'Journaux lus : {len(transcripts(args.hours))} · appels Strava trouvés : {len(calls)}')
+    if not calls:
+        print('! Aucune réponse Strava trouvée dans le journal de la session : copier chaque réponse du connecteur '
+              'telle quelle dans .sync/raw/ (list_1.json, streams_<id>.json, zones.json), puis relancer ce script. Voir SYNC.md.')
     print(f'Activités vues : {len(acts)} (dont {len(in_window)} dans la fenêtre depuis {start[:10]}) · nouvelles : {len(new)}')
     for a in sorted(new, key=lambda x: x['start_local']):
         print(f"  + {a['start_local'][:16]} {a['sport_type']:<10} {(a['distance'] or 0) / 1000:5.1f} km  {a['name']}")

@@ -13,8 +13,9 @@ En ligne sur **https://sillage.alexandrebarreau.fr**.
   2. elle décide lesquelles sont des compétitions ;
   3. elle vérifie que tout le site se recalcule sans erreur ;
   4. elle pousse sur `main`.
-- Si une nuit échoue, rien n’est poussé, et la synchro suivante rattrape tout : elle relit
-  toujours les 14 derniers jours.
+- Chaque nuit laisse une ligne dans [sync/journal.md](sync/journal.md), même en cas d’échec.
+- Si une nuit échoue, aucune donnée n’est poussée, et la synchro suivante rattrape tout : elle
+  relit toujours les 14 derniers jours.
 
 ## Voir le site en local
 
@@ -39,7 +40,9 @@ node scripts/check.cjs   # recalcule les 49 calculs du site sur docs/data/
 | `scripts/harvest.py` | lit les réponses du connecteur Strava et prépare la fiche d’analyse |
 | `scripts/merge.py` | applique la synchro après vérification |
 | `scripts/check.cjs` | vérification complète des données |
+| `scripts/publish.py` | journal, commit et push de la synchro (ou du seul journal en cas d’échec) |
 | `scripts/og.py` | image d’aperçu des liens partagés |
+| `sync/journal.md` | une ligne par nuit : ce qui a changé, compétitions repérées, échecs |
 | `sync/state.json` | mémoire de la synchro (sorties sans cardio, dernière synchro) |
 
 Police : Newsreader (SIL Open Font License). Graphiques : d3 (ISC).
