@@ -9,12 +9,12 @@ STAGE = ROOT / '.sync'  # zone de travail de la synchro (jamais versionnée)
 STATE = ROOT / 'sync' / 'state.json'  # mémoire de la synchro (versionnée)
 
 RUN_TYPES = ('Run', 'TrailRun', 'VirtualRun')
-CATEGORIES = {  # catégorie → distance officielle en km (None : on garde la distance GPS)
+CATEGORIES = {  # catégorie → distance officielle fixe en km (None : celle de l'épreuve, notée course par course)
     '10 km': 10,
     'Semi': 21.0975,
     '20 km': 20,
     'Marathon': 42.195,
-    'Paris-Versailles': None,
+    'Paris-Versailles': 16.2,
     'Trail': None,
     'Relais': None,
     'Autre': None,

@@ -248,9 +248,10 @@ dash.calc('longest', {
 
 dash.calc('race_results', {
   title: 'Résultats en compétition',
-  description: 'Chaque compétition avec son chrono (officiel s’il est connu, sinon temps écoulé Strava), son allure sur la distance officielle (sinon GPS) et si c’était un record dans sa catégorie à ce moment-là.',
+  description: 'Chaque compétition avec son chrono (officiel s’il est connu, sinon temps écoulé Strava), sa distance officielle (10 km, 20 km, semi, marathon, 16,2 km pour Paris-Versailles, ou celle notée pour l’épreuve ; à défaut la distance GPS), son allure réelle (chrono ÷ distance officielle) et si c’était un record dans sa catégorie à ce moment-là.',
   inputs: ['races', 'runs'],
   fn: (races, runs) => {
+    const OFFICIAL = { '10 km': 10, Semi: 21.0975, '20 km': 20, Marathon: 42.195, 'Paris-Versailles': 16.2 };
     const byId = new Map(runs.map((r) => [r.id, r]));
     const best = new Map();
     return races
@@ -258,10 +259,11 @@ dash.calc('race_results', {
       .map((race) => {
         const run = byId.get(String(race.id));
         const time = race.official_s == null ? run.elapsed_s : Number(race.official_s);
-        const km = race.distance_km == null ? run.km : Number(race.distance_km);
+        const set = race.distance_km != null ? Number(race.distance_km) : OFFICIAL[race.category];
+        const km = set > 0 ? set : run.km;
         return {
           id: run.id, date: run.date, year: run.year, day: run.day, event: race.event, category: race.category,
-          km, gps_km: run.km, time_s: time, official: race.official_s != null, pace_s: time / km,
+          km, gps_km: run.km, official_km: set > 0, time_s: time, official: race.official_s != null, pace_s: time / km,
           place: race.place || null, elev_m: run.elev_m, spm: run.spm, kudos: run.kudos,
         };
       })

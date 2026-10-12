@@ -1032,7 +1032,8 @@
         title: r.event,
         rows: [
           { color: r.pr ? SR.col.orange : SR.col.blue, label: r.official ? 'Chrono officiel' : 'Temps écoulé', value: SR.dur(r.time_s) },
-          { label: 'Allure', value: `${SR.pace(r.pace_s)}/km` },
+          { label: r.official_km ? 'Distance officielle' : 'Distance GPS', value: `${SR.n1(r.km)} km` },
+          { label: 'Allure réelle', value: `${SR.pace(r.pace_s)}/km` },
           ...(r.place ? [{ label: 'Classement', value: r.place }] : []),
           ...(r.pr ? [{ label: 'Record personnel', value: 'oui' }] : []),
         ],

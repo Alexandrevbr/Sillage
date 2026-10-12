@@ -134,16 +134,26 @@ n’est pas une compétition.
 | `Semi` | 21.0975 |
 | `20 km` | 20 |
 | `Marathon` | 42.195 |
-| `Paris-Versailles` | null |
-| `Trail` | null |
-| `Relais` | null |
-| `Autre` | null |
+| `Paris-Versailles` | 16.2 |
+| `Trail` | distance officielle de l’épreuve |
+| `Relais` | distance officielle du relais couru |
+| `Autre` | distance officielle de l’épreuve |
 
 - `Trail` : épreuve nature, avec du dénivelé ou en TrailRun.
 - `Relais` : Ekiden, marathon en duo…
 - `Autre` : distances inhabituelles et parcours atypiques non comparables, par exemple
   Marseille-Cassis. Une nouvelle distance standard (5 km, 15 km…) va aussi dans `Autre`, et il faut
   le signaler dans `notes` : le site devra être adapté.
+
+**`distance_km`** : toujours la distance **officielle**, jamais celle du GPS. Le site calcule
+l’allure réelle avec elle (chrono ÷ distance officielle).
+- Pour les quatre premières catégories et Paris-Versailles, elle est fixe : le script la remplit
+  tout seul.
+- Pour `Trail`, `Relais` et `Autre`, mettre la distance annoncée par l’organisateur, d’après la
+  description ou une épreuve connue. Exemples : Trail des Ébihens 20, Marseille-Cassis 20,
+  relais de 10 km de l’Ekiden 10.
+- Si elle est inconnue, mettre `null` : le site prend alors la distance GPS. Le script refuse une
+  distance trop éloignée du GPS (moins de 80 % ou plus de 125 %).
 
 **`official_s`** : chrono officiel en secondes entières, seulement s’il est écrit dans la
 description. Par exemple « 33’53 officiel » donne 2033. Sinon `null`, et le site prend le temps

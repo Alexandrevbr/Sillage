@@ -24,7 +24,7 @@ def fail(msg):
     sys.exit(1)
 
 
-def check_decisions(dec, acts):
+def check_decisions(dec, acts, race_by):
     if not isinstance(dec, dict) or not isinstance(dec.get('upsert', []), list) or not isinstance(dec.get('remove', []), list):
         fail('decisions.json doit être un objet {"upsert": [...], "remove": [...], "notes": "..."}')
     out, warnings = [], []
@@ -41,9 +41,21 @@ def check_decisions(dec, acts):
         event = str(r.get('event') or '').strip()
         if not event:
             fail(f'compétition {rid} : nom d’épreuve vide')
-        dist = CATEGORIES[cat]
-        if r.get('distance_km') not in (None, dist):
-            warnings.append(f'{rid} : distance_km {r.get("distance_km")} remplacée par {dist} (catégorie {cat})')
+        fixed, given = CATEGORIES[cat], r.get('distance_km')
+        if fixed is not None:
+            if given not in (None, fixed):
+                warnings.append(f'{rid} : distance_km {given} remplacée par {fixed} (catégorie {cat})')
+            dist = fixed
+        elif given is None:
+            old = race_by.get(rid) or {}
+            dist = old.get('distance_km') if old.get('category') == cat else None  # on ne perd pas une distance déjà notée
+        else:
+            gps = (a.get('distance') or 0) / 1000
+            if not isinstance(given, (int, float)) or given <= 0:
+                fail(f'compétition {rid} : distance_km doit être un nombre de km')
+            if gps and not 0.8 <= given / gps <= 1.25:
+                fail(f'compétition {rid} : distance officielle {given} km incohérente avec le GPS ({gps:.2f} km)')
+            dist = round(float(given), 4)
         off = r.get('official_s')
         if off is not None:
             if not isinstance(off, int) or off <= 0:
@@ -119,8 +131,8 @@ def main():
         zones = new_zones
 
     # ----- compétitions -----
-    upserts, remove, warnings = check_decisions(decisions, acts)
     race_by = {r['id']: r for r in races}
+    upserts, remove, warnings = check_decisions(decisions, acts, race_by)
     race_added, race_updated, race_removed = [], [], []
     for r in upserts:
         old = race_by.get(r['id'])
