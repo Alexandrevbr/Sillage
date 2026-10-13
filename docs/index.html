@@ -925,6 +925,154 @@
     margin-left: auto;
   }
   .sr-mapinfo button:focus-visible { outline: 2px solid var(--sr-blue); outline-offset: 2px; }
+  /* ---------- Boutons, menus ---------- */
+  .sr-btn {
+    appearance: none;
+    font: inherit;
+    font-size: var(--cds-font-size-caption);
+    color: var(--color-fg);
+    background: var(--color-panel);
+    border: 1px solid var(--color-border-line);
+    border-radius: 999px;
+    padding: 6px 14px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 120ms, border-color 120ms;
+  }
+  .sr-btn:hover { background: color-mix(in srgb, var(--color-fg) 5%, var(--color-panel)); }
+  .sr-btn:focus-visible, .sr-select:focus-visible, .sr-loop:focus-visible, .sr-jump a:focus-visible { outline: 2px solid var(--sr-blue); outline-offset: 2px; }
+  .sr-btn--primary { background: var(--color-fg); color: var(--color-panel); border-color: var(--color-fg); }
+  .sr-btn--primary:hover { background: color-mix(in srgb, var(--color-fg) 86%, var(--color-panel)); }
+  .sr-btn[disabled] { opacity: .5; cursor: default; }
+  .sr-selectwrap { position: relative; display: inline-flex; max-width: 100%; }
+  .sr-select {
+    appearance: none;
+    font: inherit;
+    font-size: var(--cds-font-size-body);
+    color: var(--color-fg);
+    background: var(--color-panel);
+    border: 1px solid var(--color-border-line);
+    border-radius: 999px;
+    padding: 6px 34px 6px 14px;
+    max-width: min(100%, 22rem);
+    text-overflow: ellipsis;
+    cursor: pointer;
+  }
+  .sr-selectwrap::after {
+    content: "";
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    width: 7px;
+    height: 7px;
+    border-right: 1.5px solid var(--color-fg-muted);
+    border-bottom: 1.5px solid var(--color-fg-muted);
+    transform: translateY(-70%) rotate(45deg);
+    pointer-events: none;
+  }
+  .sr-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .sr-seg--wrap { flex-wrap: wrap; border-radius: 18px; }
+
+  /* ---------- Sommaire d’onglet ---------- */
+  .sr-jump { display: flex; flex-wrap: wrap; gap: 6px; margin-top: calc(var(--cds-gap-lg) * -0.4); }
+  .sr-jump a {
+    font-size: var(--cds-font-size-caption);
+    color: var(--color-fg-muted);
+    text-decoration: none;
+    padding: 4px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--sr-line);
+    background: var(--color-panel);
+  }
+  .sr-jump a:hover { color: var(--color-fg); border-color: var(--color-border-line); }
+
+  /* ---------- Reprises ---------- */
+  .sr-reps { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+  .sr-reps li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px 16px;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--sr-line);
+  }
+  .sr-reps li:last-child { border-bottom: 0; }
+  .sr-reps__what { display: grid; gap: 2px; min-width: 0; }
+  .sr-reps__title { font-weight: var(--cds-font-weight-medium); }
+  .sr-reps__sub { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+  .sr-reps__sub b { color: var(--color-fg); font-weight: var(--cds-font-weight-medium); }
+  .sr-reps svg { display: block; }
+  @container sr (max-width: 560px) { .sr-reps li { grid-template-columns: minmax(0, 1fr); } }
+
+  /* ---------- Boucles ---------- */
+  .sr-loops { display: grid; gap: var(--cds-gap-sm); grid-template-columns: repeat(auto-fill, minmax(min(100%, 12.5rem), 1fr)); }
+  /* Sur téléphone, les boucles défilent à l’horizontale. */
+  @container sr (max-width: 560px) {
+    .sr-loops {
+      grid-template-columns: none;
+      grid-auto-flow: column;
+      grid-auto-columns: 10.5rem;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+      margin-inline: calc(var(--cds-pad-lg) * -1);
+      padding: 2px var(--cds-pad-lg) 6px;
+      scroll-padding-inline: var(--cds-pad-lg);
+    }
+    .sr-loops::-webkit-scrollbar { display: none; }
+    .sr-loop { scroll-snap-align: start; }
+  }
+  .sr-loop {
+    appearance: none;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    display: grid;
+    gap: 6px;
+    padding: var(--cds-pad-sm);
+    border: 1px solid var(--color-border-line);
+    border-radius: var(--cds-radius);
+    background: var(--color-panel);
+    transition: border-color 120ms, box-shadow 120ms;
+    min-width: 0;
+  }
+  .sr-loop:hover { border-color: color-mix(in srgb, var(--color-fg) 30%, var(--color-border-line)); }
+  .sr-loop[aria-pressed="true"] { border-color: var(--color-fg); box-shadow: inset 0 0 0 1px var(--color-fg); }
+  .sr-loop svg { display: block; width: 100%; height: auto; border-radius: calc(var(--cds-radius) - 2px); background: color-mix(in srgb, var(--color-fg) 4%, transparent); }
+  .sr-loop__name { font-weight: var(--cds-font-weight-medium); font-size: var(--cds-font-size-body); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sr-loop__sub { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+  .sr-loop__sub b { color: var(--color-fg); font-weight: var(--cds-font-weight-medium); }
+
+  /* ---------- Récap ---------- */
+  .sr-recap {
+    display: grid;
+    gap: var(--cds-gap-lg);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    align-items: center;
+    border: 1px solid var(--color-border-line);
+    border-radius: calc(var(--cds-radius) * 2);
+    background: var(--color-panel);
+    padding: clamp(18px, 3.4cqi, 40px);
+  }
+  @container sr (max-width: 760px) { .sr-recap { grid-template-columns: minmax(0, 1fr); } }
+  .sr-recap__side { display: grid; gap: 14px; align-content: center; justify-items: start; }
+  .sr-recap__title { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: clamp(2rem, 5cqi, 3rem); line-height: 1.05; margin: 0; }
+  .sr-recap__lede { color: var(--color-fg-muted); max-width: 36ch; }
+  .sr-recap__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .sr-recap__actions .sr-btn { font-size: var(--cds-font-size-body); padding: 8px 18px; }
+  .sr-recap__hint { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+  .sr-recap__stage { display: flex; justify-content: center; }
+  .sr-recap__canvas {
+    display: block;
+    width: min(100%, 380px);
+    aspect-ratio: 9 / 16;
+    height: auto;
+    border-radius: 18px;
+    box-shadow: 0 18px 50px rgb(0 0 0 / .22), 0 2px 6px rgb(0 0 0 / .12);
+    background: #0d0d0c;
+  }
+  .sr-tablewrap--plan { max-height: 420px; }
   .sr-mapgrid { align-items: start; }
   @container sr (max-width: 560px) { .sr-map { height: min(112vw, 460px); } }
   #card-map { scroll-margin-top: 64px; }
@@ -1006,6 +1154,7 @@
     <button class="sr-tab" role="tab" id="tab-competitions" data-page="competitions" aria-controls="competitions" aria-selected="false" tabindex="-1">Compétitions</button>
     <button class="sr-tab" role="tab" id="tab-habitudes" data-page="habitudes" aria-controls="habitudes" aria-selected="false" tabindex="-1">Habitudes</button>
     <button class="sr-tab" role="tab" id="tab-carte" data-page="carte" aria-controls="carte" aria-selected="false" tabindex="-1">Carte</button>
+    <button class="sr-tab" role="tab" id="tab-recap" data-page="recap" aria-controls="recap" aria-selected="false" tabindex="-1">Récap</button>
   </nav>
 
   <!-- ====================== Vue d’ensemble ====================== -->
@@ -1138,11 +1287,35 @@
         </div>
       </article>
     </div>
+
+    <article class="sr-card" id="card-goalplan">
+      <div class="sr-card__head">
+        <div>
+          <h3 class="sr-card__title" id="goalplan-title">Plan d’allure km par km</h3>
+          <p class="sr-card__note" id="goalplan-note">Le chrono visé réparti sur chaque km du parcours</p>
+        </div>
+        <div class="sr-legend" id="goalplan-legend"></div>
+      </div>
+      <p class="sr-stats" id="goalplan-stats"></p>
+      <div class="sr-chart dash-skeleton" id="c-goalplan" data-source="goal_plan" style="--h: 240px"></div>
+      <div class="sr-tablewrap sr-tablewrap--plan">
+        <table class="sr-table sr-table--tight" id="t-goalplan" data-source="goal_plan">
+          <thead><tr><th class="sr-l">Km</th><th>Allure</th><th>Passage</th><th id="goalplan-prevh">Dernière édition</th><th>Écart</th></tr></thead>
+          <tbody class="dash-skeleton"></tbody>
+        </table>
+      </div>
+    </article>
   </section>
 
   <!-- ====================== Entraînement ====================== -->
   <section class="sr-page" id="entrainement" role="tabpanel" aria-labelledby="tab-entrainement" hidden>
     <p class="sr-lead dash-skeleton" id="train-lead" data-source="easy_summary vol_summary recov_summary"></p>
+    <nav class="sr-jump" aria-label="Aller à une partie de l’onglet">
+      <a href="#zone-grise">Zone grise</a>
+      <a href="#volume">Volume</a>
+      <a href="#charge">Charge et reprise</a>
+      <a href="#recuperation">Récupération</a>
+    </nav>
 
     <div class="sr-section" id="zone-grise">
       <h2 class="sr-h2">Zone grise</h2>
@@ -1213,6 +1386,43 @@
         <div class="sr-chart dash-skeleton" id="c-long" data-source="long_runs" style="--h: 280px"></div>
       </article>
     </div>
+
+    <div class="sr-section" id="charge">
+      <h2 class="sr-h2">Charge et reprise</h2>
+      <p class="sr-section__note">Les hausses de volume trop brutales, surtout après une coupure</p>
+    </div>
+    <div class="sr-tiles dash-skeleton" id="charge-tiles" data-source="charge_summary" style="min-height: 92px"></div>
+    <div class="sr-grid">
+      <article class="sr-card" id="card-ramp">
+        <div class="sr-card__head">
+          <div>
+            <h3 class="sr-card__title">Hausse du volume, semaine par semaine</h3>
+            <p class="sr-card__note">Km de la semaine comparés à la moyenne des 4 précédentes · repère : au-delà de +30 %, le risque de blessure augmente nettement</p>
+          </div>
+          <div class="sr-legend" id="ramp-legend"></div>
+        </div>
+        <div class="sr-chart dash-skeleton" id="c-ramp" data-source="ramp_weeks" style="--h: 240px"></div>
+      </article>
+      <article class="sr-card" id="card-acwr">
+        <div class="sr-card__head">
+          <div>
+            <h3 class="sr-card__title">Charge aiguë et chronique</h3>
+            <p class="sr-card__note">Charge des 7 derniers jours ÷ moyenne hebdomadaire des 28 derniers (efforts relatifs Strava, tous sports) · entre 0,8 et 1,3 : progression maîtrisée ; au-delà de 1,5 : hausse brutale</p>
+          </div>
+          <div class="sr-legend" id="acwr-legend"></div>
+        </div>
+        <div class="sr-chart dash-skeleton" id="c-acwr" data-source="acwr" style="--h: 240px"></div>
+      </article>
+    </div>
+    <article class="sr-card" id="card-reprises">
+      <div class="sr-card__head">
+        <div>
+          <h3 class="sr-card__title">Mes reprises après une coupure</h3>
+          <p class="sr-card__note">Baisse = au moins 2 semaines sous la moitié du volume habituel · ensuite, les km de chaque semaine jusqu’au retour à 85 % du volume d’avant</p>
+        </div>
+      </div>
+      <ol class="sr-reps dash-skeleton" id="c-reprises" data-source="reprises" style="min-height: 160px"></ol>
+    </article>
 
     <div class="sr-section" id="recuperation">
       <h2 class="sr-h2">Récupération et enchaînement des courses</h2>
@@ -1811,6 +2021,40 @@
       <div class="sr-facets dash-skeleton" id="c-facets" data-source="race_results race_best" style="min-height: 200px"></div>
     </article>
 
+    <div class="sr-section" id="sec-pacing">
+      <h2 class="sr-h2">Gestion de course</h2>
+      <p class="sr-section__note" id="pacing-cov">Comment je répartis mon effort, du départ à l’arrivée</p>
+    </div>
+    <article class="sr-card" id="card-pacesplit">
+      <div class="sr-card__head">
+        <div>
+          <h3 class="sr-card__title">Deuxième moitié contre première</h3>
+          <p class="sr-card__note">Écart d’allure entre la 2e et la 1re moitié de chaque course : au-dessus de zéro, j’ai ralenti ; en dessous, j’ai fini plus vite (négative split) · courses dont la montre a fait des tours au km</p>
+        </div>
+        <div class="sr-legend" id="pacesplit-legend"></div>
+      </div>
+      <div class="sr-chart dash-skeleton" id="c-pacesplit" data-source="race_pacing" style="--h: 260px"></div>
+    </article>
+    <article class="sr-card" id="card-racekm">
+      <div class="sr-card__head">
+        <div>
+          <h3 class="sr-card__title" id="racekm-title">Une course, km par km</h3>
+          <p class="sr-card__note" id="racekm-note">Écart de chaque km à mon allure moyenne sur la course</p>
+        </div>
+        <label class="sr-selectwrap"><span class="sr-visually-hidden">Course</span><select class="sr-select" id="racekm-pick" aria-label="Course à détailler"></select></label>
+      </div>
+      <p class="sr-stats" id="racekm-stats"></p>
+      <div class="sr-legend" id="racekm-legend"></div>
+      <div class="sr-chart dash-skeleton" id="c-racekm" data-source="race_pacing" style="--h: 250px"></div>
+      <div class="sr-chart" id="c-racekm-hr" style="--h: 110px"></div>
+      <div class="sr-tablewrap" id="racekm-eds-wrap" hidden>
+        <table class="sr-table sr-table--tight" id="t-racekm-eds">
+          <thead><tr><th class="sr-l">Édition</th><th>Chrono</th><th class="sr-hide-sm">1re moitié</th><th class="sr-hide-sm">2e moitié</th><th>Écart</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </article>
+
     <article class="sr-card" id="card-racetable">
       <div class="sr-card__head">
         <div>
@@ -1963,6 +2207,71 @@
         <ol class="sr-qlist sr-qlist--tall dash-skeleton" id="c-maprace" data-source="map_runs race_results" style="min-height: 200px"></ol>
       </article>
     </div>
+
+    <div class="sr-section" id="boucles">
+      <h2 class="sr-h2">Boucles habituelles</h2>
+      <p class="sr-section__note">Les parcours que je refais : le même terrain, donc la meilleure mesure de forme</p>
+    </div>
+    <div class="sr-loops dash-skeleton" id="c-loops" data-source="loops" style="min-height: 180px"></div>
+    <article class="sr-card" id="card-loop">
+      <div class="sr-card__head">
+        <div>
+          <h3 class="sr-card__title" id="loop-title">Une boucle, passage après passage</h3>
+          <p class="sr-card__note" id="loop-note">Allure de chaque passage, couleur selon la FC moyenne</p>
+        </div>
+        <button type="button" class="sr-btn" id="loop-map">Voir sur la carte</button>
+      </div>
+      <p class="sr-stats" id="loop-stats"></p>
+      <div class="sr-legend" id="loop-legend"></div>
+      <div class="sr-chart dash-skeleton" id="c-loop" data-source="loops" style="--h: 260px"></div>
+    </article>
+
+    <div class="sr-section" id="segments">
+      <h2 class="sr-h2">Segments Strava</h2>
+      <p class="sr-section__note" id="seg-cov">Les portions où je passe le plus souvent</p>
+    </div>
+    <div class="sr-grid sr-grid--wide">
+      <article class="sr-card" id="card-seg">
+        <div class="sr-card__head">
+          <div>
+            <h3 class="sr-card__title" id="seg-title">Un segment, passage après passage</h3>
+            <p class="sr-card__note" id="seg-note">Temps de chaque passage, couleur selon la FC moyenne</p>
+          </div>
+        </div>
+        <p class="sr-stats" id="seg-stats"></p>
+        <div class="sr-legend" id="seg-legend"></div>
+        <div class="sr-chart dash-skeleton" id="c-seg" data-source="seg_top" style="--h: 240px"></div>
+      </article>
+      <article class="sr-card" id="card-seglist">
+        <div class="sr-card__head">
+          <div>
+            <h3 class="sr-card__title">Les plus courus</h3>
+            <p class="sr-card__note">Au moins 3 passages · meilleur temps à droite</p>
+          </div>
+        </div>
+        <ol class="sr-qlist dash-skeleton" id="c-seglist" data-source="seg_top" style="min-height: 160px"></ol>
+      </article>
+    </div>
+  </section>
+
+  <!-- ====================== Récap ====================== -->
+  <section class="sr-page" id="recap" role="tabpanel" aria-labelledby="tab-recap" hidden>
+    <div class="sr-recap">
+      <div class="sr-recap__side">
+        <p class="sr-eyebrow">À partager</p>
+        <h2 class="sr-recap__title">Mon récap</h2>
+        <p class="sr-recap__lede">Un bilan au format story, mis à jour chaque nuit avec mes dernières sorties.</p>
+        <div class="sr-seg sr-seg--wrap" role="group" aria-label="Période" id="recap-period"></div>
+        <div class="sr-recap__actions">
+          <button type="button" class="sr-btn sr-btn--primary" id="recap-share">Partager</button>
+          <button type="button" class="sr-btn" id="recap-dl">Télécharger</button>
+        </div>
+        <p class="sr-recap__hint" id="recap-hint">Image 1080 × 1920, prête pour une story Instagram</p>
+      </div>
+      <div class="sr-recap__stage">
+        <canvas class="sr-recap__canvas dash-skeleton" id="c-recap" width="1080" height="1920" role="img" aria-label="Récap au format story"></canvas>
+      </div>
+    </div>
   </section>
 
   <p class="sr-footer">
@@ -1979,6 +2288,7 @@
 <script src="assets/calcs.js"></script>
 <script src="assets/calcs_hr.js"></script>
 <script src="assets/calcs_train.js"></script>
+<script src="assets/calcs_more.js"></script>
 <script src="assets/kit.js"></script>
 <script>
   // Date et heure de la dernière synchro, à l’heure de Paris.
@@ -1993,6 +2303,7 @@
 <script src="assets/cardio.js"></script>
 <script src="assets/train.js"></script>
 <script src="assets/map.js"></script>
+<script src="assets/more.js"></script>
 <script src="assets/app.js"></script>
 </body>
 </html>

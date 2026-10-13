@@ -4,7 +4,8 @@
   const SR = window.SR;
   const root = SR.root;
   const $ = (s) => root.querySelector(s);
-  const ui = { range: 'all', kind: 'all', sel: null };
+  const ui = { range: 'all', kind: 'all', sel: null, group: null };
+  let pendingFocus = null;
   const page = () => document.getElementById('carte');
   const visible = () => page() && !page().hidden;
   const run = (fn) => {
@@ -205,13 +206,28 @@
   };
 
   // Tracé choisi : liseré couleur du fond, trait bleu, départ (rond vide) et arrivée (rond plein).
+  // Une boucle choisie plus bas dans l’onglet : tous ses passages en bleu.
   const drawSel = (fly) => {
     const L = window.L;
     selLayer.clearLayers();
-    const r = ui.sel && byId.get(ui.sel);
-    if (!r) return;
     const blue = SR.rgb(SR.col.blue, 'rgb(42, 120, 214)');
     const panel = SR.rgb(SR.col.panel, 'rgb(255, 255, 255)');
+    if (ui.group) {
+      const rs = ui.group.ids.map((id) => byId.get(id)).filter(Boolean);
+      if (!rs.length) return;
+      rs.forEach((r) => selLayer.addLayer(L.polyline(r.pts, { renderer, color: panel, weight: 6, opacity: 0.9, interactive: false })));
+      rs.forEach((r) => selLayer.addLayer(L.polyline(r.pts, { renderer, color: blue, weight: 2.5, opacity: 0.85, interactive: false })));
+      if (fly) {
+        const s = Math.min(...rs.map((r) => r.box[0][0]));
+        const w = Math.min(...rs.map((r) => r.box[0][1]));
+        const n = Math.max(...rs.map((r) => r.box[1][0]));
+        const e = Math.max(...rs.map((r) => r.box[1][1]));
+        map.flyToBounds([[s, w], [n, e]], { padding: [24, 24], maxZoom: 15, duration: 0.7 });
+      }
+      return;
+    }
+    const r = ui.sel && byId.get(ui.sel);
+    if (!r) return;
     selLayer.addLayer(L.polyline(r.pts, { renderer, color: panel, weight: 7.5, opacity: 0.95, interactive: false }));
     selLayer.addLayer(L.polyline(r.pts, { renderer, color: blue, weight: 3.5, opacity: 1, interactive: false }));
     selLayer.addLayer(L.circleMarker(r.pts[0], { renderer, radius: 5, color: blue, weight: 2.5, fillColor: panel, fillOpacity: 1, interactive: false }));
@@ -221,6 +237,7 @@
 
   const select = (id, fly) => {
     ui.sel = id;
+    ui.group = null;
     drawSel(fly);
     renderInfo();
     renderList();
@@ -248,6 +265,11 @@
       select(null, false);
       map.flyToBounds(home, { padding: [12, 12], duration: 0.7 });
     });
+    if (ui.group) {
+      reset.textContent = 'Tout voir';
+      el.replaceChildren(SR.el('span', 'sr-mapinfo__title', ui.group.label), SR.el('span', null, `${SR.n0(ui.group.ids.length)} passages en bleu`), reset);
+      return;
+    }
     if (!r) {
       el.replaceChildren(SR.el('span', null, touch ? 'Touchez un tracé pour voir la sortie' : 'Cliquez sur un tracé pour voir la sortie'), reset);
       return;
@@ -350,6 +372,10 @@
     if (!map) {
       build(box);
       buildRange();
+      if (pendingFocus) {
+        ui.group = pendingFocus;
+        pendingFocus = null;
+      }
     }
     map.invalidateSize();
     const dark = isDark();
@@ -367,6 +393,22 @@
       renderInfo();
     }
   }
+
+  // Met en avant un ensemble de tracés (une boucle habituelle) et remonte jusqu’à la carte.
+  SR.mapFocus = (ids, label) => {
+    const g = { ids, label };
+    const card = $('#card-map');
+    if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (!map) {
+      pendingFocus = g;
+      return;
+    }
+    ui.sel = null;
+    ui.group = g;
+    drawSel(true);
+    renderInfo();
+    renderList();
+  };
 
   SR.pages = SR.pages || {};
   Object.assign(SR.pages, { carte: [drawMap] });

@@ -6,7 +6,7 @@
  * API utilisée par la page : dash.calc, dash.data, dash.colors, dash.onData, dash.setLink.
  */
 (() => {
-  // Les sources « lazy » ne sont chargées que lorsqu’un graphique les demande (onglets Entraînement et Carte).
+  // Les sources « lazy » ne sont chargées que lorsqu’un graphique les demande (onglets Entraînement, Séances, Carte, Récap…).
   const DATASETS = {
     activities: { url: 'data/activities.json' },
     races: { url: 'data/races.json' },
@@ -17,6 +17,8 @@
     laps: { url: 'data/laps.json', lazy: true },
     efforts: { url: 'data/efforts.json', lazy: true },
     routes: { url: 'data/routes.json', lazy: true },
+    seg_efforts: { url: 'data/seg_efforts.json', lazy: true },
+    segments: { url: 'data/segments.json', lazy: true },
   };
   const LOADING = Object.freeze({ status: 'loading', data: null });
   const ERROR = Object.freeze({ status: 'error', data: null });
