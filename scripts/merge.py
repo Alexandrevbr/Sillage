@@ -1,4 +1,4 @@
-"""Applique la synchro à docs/data/ : activités, flux cardio, zones et décisions sur les compétitions.
+"""Applique la synchro à docs/data/ : activités, flux cardio, tracés, tours, records, segments, zones et compétitions.
 
     python3 scripts/merge.py            → applique, vérifie avec node scripts/check.cjs, met à jour meta.json
     python3 scripts/merge.py --dry-run  → montre ce qui changerait, sans rien écrire
@@ -131,21 +131,30 @@ def main():
     routes.update({aid: staged_routes[aid] for aid in new_routes})
     route_list = [{'id': aid, 'p': routes[aid]} for aid in sorted(routes, key=lambda x: order.get(x, -1)) if aid in acts]
 
-    # ----- tours et meilleurs efforts -----
+    # ----- tours, meilleurs efforts et segments -----
     laps_by, eff_by = {}, {}
     for r in load(DATA / 'laps.json', []):
         laps_by.setdefault(r['id'], []).append(r)
     for r in load(DATA / 'efforts.json', []):
         eff_by.setdefault(r['id'], []).append(r)
+    seg_by = {r['id']: r['e'] for r in load(DATA / 'seg_efforts.json', [])}
+    segdefs = {s['s']: s for s in load(DATA / 'segments.json', [])}
     perf_empty = set(state.get('perf_empty', []))
-    new_perf = []
+    new_perf, new_segs = [], []
     for p in sorted((STAGE / 'perf').glob('*.json')) if (STAGE / 'perf').exists() else []:
         aid = p.stem
         if aid not in acts:
             continue
         pf = load(p, {})
-        if not pf.get('laps') and not pf.get('efforts'):
+        if 'segs' in pf:  # réponses récupérées avant la prise en charge des segments : pas de clé « segs »
+            if aid not in seg_by:
+                new_segs.append(aid)
+            seg_by[aid] = pf['segs']
+            for sid, d in (pf.get('segdefs') or {}).items():
+                segdefs[sid] = {'s': sid, **d}
+        if not pf.get('laps') and not pf.get('efforts') and not pf.get('segs'):
             perf_empty.add(aid)
+            seg_by.pop(aid, None)
             continue
         perf_empty.discard(aid)
         if aid not in laps_by:
@@ -154,6 +163,9 @@ def main():
         eff_by[aid] = [{'id': aid, 'e': name, 's': sec} for name, sec in (pf.get('efforts') or {}).items()]
     by_order = lambda d: [r for aid in sorted(d, key=lambda x: order.get(x, -1)) if aid in acts for r in d[aid]]  # noqa: E731
     lap_list, eff_list = by_order(laps_by), by_order(eff_by)
+    seg_list = [{'id': aid, 'e': seg_by[aid]} for aid in sorted(seg_by, key=lambda x: order.get(x, -1)) if aid in acts]
+    used = {e[0] for r in seg_list for e in r['e']}
+    seg_defs = sorted((d for sid, d in segdefs.items() if sid in used), key=lambda d: int(d['s']) if str(d['s']).isdigit() else 0)
 
     # ----- zones -----
     new_zones = load(STAGE / 'zones.json')
@@ -184,7 +196,7 @@ def main():
     now = dt.datetime.now(dt.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
     perf_done = len(set(laps_by) | perf_empty)
     meta = [{'synced_at': now, 'activities': len(act_list), 'runs': len(runs), 'races': len(race_list),
-             'perf_runs': perf_done, 'routes': len(route_list),
+             'perf_runs': perf_done, 'seg_runs': len(set(seg_by) | perf_empty), 'routes': len(route_list),
              'hr_runs': len(by_id), 'last_activity': act_list[-1]['start_local'] if act_list else None}]
 
     # ----- résumé -----
@@ -197,6 +209,8 @@ def main():
         lines.append(f'{len(new_streams)} sortie(s) avec cardio ajoutée(s)')
     if new_perf:
         lines.append(f'tours et records de {len(new_perf)} sortie(s) ({perf_done}/{len(runs)} complètes)')
+    if new_segs:
+        lines.append(f'segments de {len(new_segs)} sortie(s) ({len(set(seg_by) | perf_empty)}/{len(runs)} complètes)')
     if new_routes:
         lines.append(f'{len(new_routes)} tracé(s) GPS ({len(route_list)} au total)')
     if race_added:
@@ -230,13 +244,15 @@ def main():
         save(t / 'routes.json', route_list)
         save(t / 'laps.json', lap_list)
         save(t / 'efforts.json', eff_list)
+        save(t / 'seg_efforts.json', seg_list)
+        save(t / 'segments.json', seg_defs)
         res = subprocess.run(['node', str(ROOT / 'scripts' / 'check.cjs'), str(t)], capture_output=True, text=True)
         print(res.stdout.strip())
         if res.returncode != 0:
             print(res.stderr.strip())
             fail('vérification en échec : docs/data/ n’a pas été modifié')
         for name in ('activities.json', 'races.json', 'hr_streams.json', 'hr_zones.json', 'meta.json',
-                     'routes.json', 'laps.json', 'efforts.json'):
+                     'routes.json', 'laps.json', 'efforts.json', 'seg_efforts.json', 'segments.json'):
             shutil.copyfile(t / name, DATA / name)
     state.update({'last_sync': now, 'no_hr': sorted(no_hr), 'perf_empty': sorted(perf_empty)})
     save(STATE, state)

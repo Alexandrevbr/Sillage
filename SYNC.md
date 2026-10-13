@@ -30,8 +30,9 @@ Règles d’or :
 3. **Inventaire**
 
    Lancer `python3 scripts/harvest.py`. Il relit les réponses du connecteur dans le journal de
-   la session. Il liste ensuite les flux cardio à récupérer, puis les tours et records à récupérer :
-   d’abord les nouvelles sorties, puis 20 anciennes sorties à compléter.
+   la session. Il liste ensuite les flux cardio à récupérer, puis les sorties dont il faut les tours,
+   records et segments : d’abord les nouvelles sorties, puis 20 anciennes (les compétitions
+   d’abord, puis les plus récentes).
 
 4. **Flux cardio**
 
@@ -41,11 +42,12 @@ Règles d’or :
      (:00, :15, :30, :45).
    - Une sortie sans cardio est normale : elle sera notée et ne sera plus redemandée.
 
-5. **Tours et records**
+5. **Tours, records et segments**
 
    Pour chaque id listé, appeler `get_activity_performance(activity_id=<id>)`, une sortie à la
    fois.
-   - La réponse est longue (segments), n’en recopier rien : le script la relit dans le journal.
+   - La réponse est longue (segments), n’en recopier rien : le script la relit dans le journal,
+     même quand elle a été enregistrée dans un fichier parce que trop longue.
    - Toutes les 10 sorties, relancer `python3 scripts/harvest.py`. Il met les réponses déjà
      reçues à l’abri et raccourcit la liste.
    - Même limite Strava qu’à l’étape 4.
@@ -57,7 +59,7 @@ Règles d’or :
 7. **Contrôle**
 
    Relancer `python3 scripts/harvest.py`. Il doit annoncer « Aucun flux cardio à récupérer » et
-   « Aucun tour ni record à récupérer cette fois ».
+   « Aucun tour, record ni segment à récupérer cette fois ».
 
 8. **Analyse des compétitions**
 
@@ -86,7 +88,7 @@ Règles d’or :
 Une consigne de lancement peut demander un rattrapage plus gros. Dans ce cas, suivre les mêmes
 étapes, avec deux différences :
 
-- **Tours et records** : lancer `python3 scripts/harvest.py --backlog <N>` au lieu de
+- **Tours, records et segments** : lancer `python3 scripts/harvest.py --backlog <N>` au lieu de
   `harvest.py` à l’étape 3, et à chaque relance.
 - **Tracés GPS** : à l’étape 2, relire tout l’historique avec
   `list_activities(first=100, include_polyline=true, ordering="StartDateLocalAsc", range_start="2018-01-01T00:00:00")`,

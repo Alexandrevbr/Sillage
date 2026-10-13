@@ -97,7 +97,10 @@ EFFORT_NAMES = {  # meilleurs efforts Strava → libellés du site
 
 
 def perf_of(out):
-    """Réponse de get_activity_performance → tours et meilleurs efforts (les segments sont ignorés)."""
+    """Réponse de get_activity_performance → tours, meilleurs efforts et passages sur les segments Strava.
+
+    segs : [[id du segment, temps écoulé en s, FC moyenne ou None], …] ; segdefs : nom, distance (m) et D+ (m) de chaque segment.
+    """
     def r(v, n=1):
         return round(v, n) if isinstance(v, (int, float)) else None
 
@@ -111,4 +114,12 @@ def perf_of(out):
         'hr': r(l.get('avg_hr')), 'hrmax': l.get('max_hr'), 'cad': r(l.get('avg_cadence')),
         'el': r(l.get('elevation_gain')), 'g': r(l.get('avg_grade'), 2),
     } for l in out.get('laps') or []]
-    return {'efforts': efforts, 'laps': laps}
+    segs, segdefs = [], {}
+    for s in out.get('segment_efforts') or []:
+        sid, t = str(s.get('segment_id') or ''), s.get('elapsed_time')
+        if not sid or not isinstance(t, (int, float)) or t <= 0:
+            continue
+        hr = s.get('avg_hr')
+        segs.append([sid, int(t), round(hr) if isinstance(hr, (int, float)) and hr > 0 else None])
+        segdefs[sid] = {'n': ' '.join(str(s.get('segment_name') or '').split()), 'd': r(s.get('distance')), 'e': r(s.get('elev_gain'))}
+    return {'efforts': efforts, 'laps': laps, 'segs': segs, 'segdefs': segdefs}

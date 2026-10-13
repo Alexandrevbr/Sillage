@@ -22,6 +22,8 @@ const data = {
   routes: read('routes.json', []),
   laps: read('laps.json', []),
   efforts: read('efforts.json', []),
+  seg_efforts: read('seg_efforts.json', []),
+  segments: read('segments.json', []),
   goal: read('goal.json', []),
 };
 
@@ -42,13 +44,17 @@ for (const r of data.hr_streams) {
   if (!ids.has(r.id)) { problems.push(`flux cardio sans activité : ${r.id}`); break; }
 }
 if (data.hr_zones.length !== 5) problems.push('il faut 5 zones cardio');
-for (const k of ['routes', 'laps', 'efforts']) {
+for (const k of ['routes', 'laps', 'efforts', 'seg_efforts']) {
   const bad = data[k].find((r) => !ids.has(r.id));
   if (bad) problems.push(`${k} : activité inconnue ${bad.id}`);
 }
 if (data.routes.some((r) => typeof r.p !== 'string' || !r.p)) problems.push('routes : tracé vide');
 if (data.laps.some((r) => !(r.d >= 0) || !(r.mt >= 0))) problems.push('laps : tour sans distance ou sans durée');
 if (data.efforts.some((r) => !r.e || !(r.s > 0))) problems.push('efforts : effort invalide');
+const segIds = new Set(data.segments.map((s) => String(s.s)));
+if (data.seg_efforts.some((r) => !Array.isArray(r.e) || r.e.some((e) => !segIds.has(String(e[0])) || !(e[1] > 0)))) {
+  problems.push('segments : passage sur un segment inconnu ou sans temps');
+}
 
 // ----- calculs du site -----
 const defs = new Map();

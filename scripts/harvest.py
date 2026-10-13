@@ -2,7 +2,7 @@
 
     python3 scripts/harvest.py --plan          → fenêtre à relire (à passer à list_activities)
     python3 scripts/harvest.py                 → lit les réponses du connecteur, prépare .sync/
-    python3 scripts/harvest.py --backlog 40    → idem, avec 40 anciennes sorties à compléter (tours, records)
+    python3 scripts/harvest.py --backlog 40    → idem, avec 40 anciennes sorties à compléter (tours, records, segments)
 
 Les réponses sont lues à deux endroits, fusionnés :
   1. le journal de la session Claude en cours (~/.claude/projects/**/*.jsonl récents) ;
@@ -24,7 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import DATA, RESOLUTION, RUN_TYPES, STAGE, STATE, STREAMS, flat, hms, load, pace, perf_of, save  # noqa: E402
 
 WINDOW_DAYS = 14  # on relit les 14 derniers jours : titres, descriptions et kudos changent après coup
-BACKLOG = 20  # anciennes sorties complétées chaque nuit (tours et meilleurs efforts ; réponses longues)
+BACKLOG = 20  # anciennes sorties complétées chaque nuit (tours, meilleurs efforts et segments ; réponses longues)
 
 
 def window_start():
@@ -156,7 +156,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--plan', action='store_true', help='affiche la fenêtre à relire et s’arrête')
     ap.add_argument('--hours', type=float, default=12, help='âge maximal des journaux de session lus')
-    ap.add_argument('--backlog', type=int, default=BACKLOG, help='anciennes sorties à compléter (tours, records)')
+    ap.add_argument('--backlog', type=int, default=BACKLOG, help='anciennes sorties à compléter (tours, records, segments)')
     args = ap.parse_args()
 
     start = window_start()
@@ -239,23 +239,27 @@ def main():
     else:
         print('Aucun flux cardio à récupérer.')
 
-    # ----- tours et meilleurs efforts : les nouvelles sorties, puis l'arriéré (les plus récentes d'abord) -----
-    done = {r['id'] for r in load(DATA / 'laps.json', [])} | set(state.get('perf_empty', []))
+    # ----- tours, meilleurs efforts et segments : les nouvelles sorties, puis l'arriéré -----
+    # Une sortie est complète quand ses segments sont connus (même zéro) ; l'arriéré passe les compétitions en premier,
+    # puis les sorties les plus récentes.
+    done = {r['id'] for r in load(DATA / 'seg_efforts.json', [])} | set(state.get('perf_empty', []))
     staged_perf = {p.stem for p in (STAGE / 'perf').glob('*.json')}
+    race_ids = {r['id'] for r in load(DATA / 'races.json', [])}
     allruns = sorted([a for a in {**known, **acts}.values() if a['sport_type'] in RUN_TYPES],
                      key=lambda a: a['start_local'], reverse=True)
     missing = [a['id'] for a in allruns if a['id'] not in done and a['id'] not in staged_perf]
     fresh = [i for i in missing if i in acts and i not in known]
     rest = [i for i in missing if i not in fresh]
+    rest = [i for i in rest if i in race_ids] + [i for i in rest if i not in race_ids]
     quota = max(0, args.backlog - len([i for i in staged_perf if i in known]))  # l'arriéré déjà traité cette session compte
     perf_todo = fresh + rest[:quota]
-    print(f'Tours et records : {len(done)} sorties complètes, {len(staged_perf)} en attente, {len(missing)} restantes.')
+    print(f'Tours, records et segments : {len(done)} sorties complètes, {len(staged_perf)} en attente, {len(missing)} restantes.')
     if perf_todo:
         print(f'À récupérer ({len(perf_todo)}) : get_activity_performance(activity_id=…), une à la fois, '
               'et relancer ce script toutes les 10 sorties, pour :')
         print('  ' + ' '.join(perf_todo))
     else:
-        print('Aucun tour ni record à récupérer cette fois.')
+        print('Aucun tour, record ni segment à récupérer cette fois.')
     have_routes = {r['id'] for r in load(DATA / 'routes.json', [])} | set(staged_routes)
     no_route = [a['id'] for a in allruns if a['id'] not in have_routes]
     print(f'Tracés GPS : {len(have_routes)} connus · {len(no_route)} sorties sans tracé'
