@@ -59,7 +59,7 @@ node scripts/check.cjs   # recalcule tous les calculs du site sur docs/data/
 | `docs/assets/calcs*.js` | les calculs (une fonction pure par indicateur) |
 | `docs/assets/kit.js`, `app.js`, `cardio.js` | formats, graphiques (d3), onglets historiques |
 | `docs/assets/train.js` | onglets Objectif, Entraînement et Séances |
-| `docs/assets/map.js` | onglet Carte (Leaflet, chargé seulement à l’ouverture de l’onglet) |
+| `docs/assets/map.js` | onglet Carte : tracés avec Leaflet, fond de carte OpenFreeMap avec MapLibre GL (chargés seulement à l’ouverture de l’onglet) |
 | `docs/assets/more.js` | gestion de course, plan d’allure, charge et reprise, boucles et segments, récap partageable |
 | `scripts/harvest.py` | lit les réponses du connecteur Strava et prépare la fiche d’analyse |
 | `scripts/merge.py` | applique la synchro après vérification |
@@ -70,4 +70,5 @@ node scripts/check.cjs   # recalcule tous les calculs du site sur docs/data/
 | `sync/state.json` | mémoire de la synchro (sorties sans cardio, dernière synchro) |
 
 Police : Newsreader (SIL Open Font License). Graphiques : d3 (ISC). Carte : Leaflet (BSD 2-Clause),
-fonds de carte © OpenStreetMap contributors et © CARTO.
+MapLibre GL JS (BSD 3-Clause) et maplibre-gl-leaflet (ISC) ; fond de carte [OpenFreeMap](https://openfreemap.org)
+(gratuit, sans clé), © OpenMapTiles, données © OpenStreetMap contributors.

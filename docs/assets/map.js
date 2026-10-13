@@ -1,5 +1,7 @@
 /* Onglet Carte : toutes les sorties en carte de chaleur, et le tracé de chaque compétition.
- * Leaflet (assets/leaflet) et les tracés (data/routes.json) ne sont chargés qu’à l’ouverture de l’onglet. */
+ * Leaflet (assets/leaflet) dessine les tracés ; le fond de carte vectoriel OpenFreeMap (gratuit, sans clé) est dessiné
+ * par MapLibre GL via le pont maplibre-gl-leaflet (assets/maplibre). Bibliothèques et tracés (data/routes.json) ne sont
+ * chargés qu’à l’ouverture de l’onglet. */
 (() => {
   const SR = window.SR;
   const root = SR.root;
@@ -18,27 +20,43 @@
     }
   };
 
-  /* ---------- Leaflet à la demande ---------- */
-  let leaflet = window.L ? 'ready' : 'idle';
-  const loadLeaflet = () => {
+  /* ---------- Leaflet et le fond de carte à la demande ---------- */
+  // La carte et les tracés s’affichent dès que Leaflet est là ; le fond de carte (MapLibre, plus lourd) arrive ensuite.
+  let leaflet = 'idle';
+  let gl = 'idle';
+  const script = (src) => new Promise((resolve, reject) => {
+    const js = document.createElement('script');
+    js.src = src;
+    js.onload = resolve;
+    js.onerror = reject;
+    document.head.append(js);
+  });
+  const loadLibs = () => {
     if (leaflet !== 'idle') return;
     leaflet = 'loading';
+    gl = 'loading';
     const css = document.createElement('link');
     css.rel = 'stylesheet';
     css.href = 'assets/leaflet/leaflet.css';
     // Avant les styles de la page, pour que nos réglages l’emportent.
     document.head.insertBefore(css, document.head.querySelector('style'));
-    const js = document.createElement('script');
-    js.src = 'assets/leaflet/leaflet.js';
-    js.onload = () => {
+    const lf = script('assets/leaflet/leaflet.js');
+    lf.then(() => {
       leaflet = 'ready';
-      if (visible()) run(drawMap);
-    };
-    js.onerror = () => {
+    }, () => {
       leaflet = 'error';
+    }).then(() => {
       if (visible()) run(drawMap);
-    };
-    document.head.append(js);
+    });
+    // Le pont a besoin de Leaflet et de MapLibre.
+    Promise.all([lf, script('assets/maplibre/maplibre-gl.js')])
+      .then(() => script('assets/maplibre/leaflet-maplibre-gl.js'))
+      .then(() => {
+        gl = 'ready';
+        run(setBase);
+      }, () => {
+        gl = 'error';
+      });
   };
 
   /* ---------- Tracés : polylignes encodées de Strava (précision 1e-5) ---------- */
@@ -117,7 +135,8 @@
   /* ---------- Carte ---------- */
   let map = null;
   let renderer = null;
-  let tiles = null;
+  let base = null; // fond de carte (couche MapLibre)
+  let baseUrl = '';
   let heat = null;
   let selLayer = null;
   let home = null;
@@ -128,7 +147,50 @@
     const c = d3.rgb(SR.rgb(SR.col.panel, 'rgb(255, 255, 255)'));
     return 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b < 128;
   };
-  const TILES = (dark) => `https://{s}.basemaps.cartocdn.com/${dark ? 'dark_all' : 'light_all'}/{z}/{x}/{y}{r}.png`;
+  const STYLE = (dark) => `https://tiles.openfreemap.org/styles/${dark ? 'dark' : 'positron'}`;
+  const ATTRIBUTION = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · <a href="https://openfreemap.org">OpenFreeMap</a> · © <a href="https://www.openmaptiles.org/">OpenMapTiles</a>';
+  const webgl = () => {
+    try {
+      const ctx = document.createElement('canvas').getContext('webgl2') || document.createElement('canvas').getContext('webgl');
+      const lose = ctx && ctx.getExtension('WEBGL_lose_context');
+      if (lose) lose.loseContext();
+      return !!ctx;
+    } catch (err) {
+      return false;
+    }
+  };
+
+  // Fond de carte clair ou sombre selon le thème. Sans WebGL, ou si le service ne répond pas, les tracés restent sur le fond du panneau.
+  function setBase() {
+    if (!map || gl !== 'ready') return;
+    const url = STYLE(isDark());
+    if (base) {
+      if (url !== baseUrl) {
+        baseUrl = url;
+        base.getMaplibreMap().setStyle(url);
+      }
+      return;
+    }
+    if (!webgl()) {
+      gl = 'error';
+      return;
+    }
+    const layer = window.L.maplibreGL({ style: url, attributionControl: { customAttribution: ATTRIBUTION } });
+    try {
+      layer.addTo(map);
+    } catch (err) {
+      gl = 'error';
+      map.off(layer.getEvents(), layer);
+      if (layer.getContainer()) layer.getContainer().remove();
+      return;
+    }
+    base = layer;
+    baseUrl = url;
+    const glMap = layer.getMaplibreMap();
+    // Tuiles momentanément indisponibles : rien à signaler, la carte reste utilisable.
+    glMap.on('error', () => {});
+    glMap.once('load', () => layer.getContainer().classList.add('is-on'));
+  }
 
   const build = (box) => {
     const L = window.L;
@@ -148,11 +210,6 @@
       attributionControl: true,
     });
     map.attributionControl.setPrefix(false);
-    tiles = L.tileLayer(TILES(isDark()), {
-      subdomains: 'abcd',
-      maxZoom: 19,
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · © <a href="https://carto.com/attributions">CARTO</a>',
-    }).addTo(map);
     heat = L.layerGroup().addTo(map);
     selLayer = L.layerGroup().addTo(map);
     // Molette active seulement après un clic dans la carte, pour ne pas gêner le défilement de la page.
@@ -174,6 +231,7 @@
     }
     home = homeBounds();
     map.fitBounds(home, { padding: [12, 12] });
+    setBase();
   };
 
   const filtered = () => runs.filter((r) => (ui.kind === 'races' ? r.race : true)
@@ -357,7 +415,7 @@
       fail(box, 'Failed to load');
       return;
     }
-    loadLeaflet();
+    loadLibs();
     if (leaflet === 'error') {
       fail(box, 'Carte indisponible');
       return;
@@ -381,7 +439,7 @@
     const dark = isDark();
     if (dark !== theme) {
       theme = dark;
-      tiles.setUrl(TILES(dark));
+      setBase();
       sig = '';
     }
     const s = `${ui.range}|${ui.kind}|${theme}`;
