@@ -1014,11 +1014,11 @@
     ctx.fillStyle = INK;
     ctx.font = font(800, 44, SANS);
     ctx.letterSpacing = '-1.5px';
-    ctx.fillText('sillage', P + 80, 130);
-    ctx.letterSpacing = '7px';
+    ctx.fillText('Sillage', P + 80, 124);
+    ctx.letterSpacing = '0px';
     ctx.fillStyle = MUTED;
-    ctx.font = font(700, 15, SANS);
-    ctx.fillText('RUNNING', P + 82, 152);
+    ctx.font = font(600, 18, SANS);
+    ctx.fillText('By Alexandre Barreau', P + 81, 158);
     // En-tête.
     ctx.fillStyle = MUTED;
     ctx.font = font(700, 26, SANS);
