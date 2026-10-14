@@ -24,8 +24,10 @@ async def shoot(url, out):
         pg = await ctx.new_page()
         await pg.goto(url, wait_until='networkidle')
         await pg.wait_for_timeout(1500)
-        await pg.add_style_tag(content='.page{padding:22px 24px!important} .sr > :not(.sr-hero){display:none!important} '
-                                       '.sr-hero{min-height:586px;display:flex;flex-direction:column;justify-content:center}')
+        # En-tête seul : logo, titre, chiffres clés et records (le paragraphe de synthèse est trop long pour un aperçu).
+        await pg.add_style_tag(content='.page{padding:40px 48px!important} .sr > :not(.sr-hero){display:none!important} '
+                                       '.sr-hero{min-height:550px;align-content:center} .sr-lede{display:none!important} '
+                                       '.sr-title{font-size:92px!important;margin:4px 0 10px!important}')
         await pg.wait_for_timeout(600)
         await pg.screenshot(path=str(out))
         await b.close()

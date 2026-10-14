@@ -132,7 +132,9 @@
   function drawHero() {
     const hl = dash.data('highlights');
     if (hl.status === 'ok' && Array.isArray(hl.data) && hl.data[0]) $('#lastrace-pr').hidden = !hl.data[0].last_race_pr;
+    // Ancienne courbe décorative de l’en-tête : n’est dessinée que si son conteneur existe.
     const box = $('#hero-bg');
+    if (!box) return;
     const res = dash.data('by_week');
     if (res.status !== 'ok' || !Array.isArray(res.data) || res.data.length < 2) return;
     const weeks = res.data;
@@ -1114,8 +1116,8 @@
         .attr('dy', '0.32em').attr('text-anchor', 'middle')).text(`${hr}h`);
     });
     g.append('text').attr('text-anchor', 'middle').attr('dy', '-0.05em')
-      .style('font-family', 'var(--font-anthropic-serif)').style('font-size', 'var(--cds-font-size-title)')
-      .style('fill', 'var(--color-fg)').text(`${peak.hour}h`);
+      .style('font-family', 'var(--font-display)').style('font-size', 'var(--cds-font-size-title)').style('font-weight', 800)
+      .style('letter-spacing', '-.03em').style('fill', 'var(--color-fg)').text(`${peak.hour}h`);
     SR.cap(g.append('text').attr('text-anchor', 'middle').attr('dy', '1.45em')).text('heure de pointe');
     SR.hover(wedges, box, tip, (h) => ({
       head: `Départ entre ${h.hour}h et ${h.hour + 1}h`,

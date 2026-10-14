@@ -117,7 +117,8 @@
 
   /* ---------- Zones cardio ---------- */
   const ZONE_NAMES = { 1: 'Endurance', 2: 'Modéré', 3: 'Tempo', 4: 'Seuil', 5: 'Anaérobie' };
-  const zoneColor = (z) => ({ 1: SR.col.aqua, 2: SR.col.blue, 3: dash.colors[3], 4: SR.col.orange, 5: dash.colors[7] }[z]);
+  // Spectre d’effort : du plus facile (cyan) au plus dur (rouge), zones voisines distinctes même pour un daltonien.
+  const zoneColor = (z) => `var(--sr-z${z})`;
   const zoneRange = (z) => (z.max_bpm == null ? `${z.min_bpm}+` : z.min_bpm <= 0 ? `<${z.max_bpm + 1}` : `${z.min_bpm}–${z.max_bpm}`);
   const zoneName = (k) => `Z${k} ${ZONE_NAMES[k]}`;
 
@@ -1091,8 +1092,8 @@
   /* ================= VDOT ================= */
   // Une couleur par distance, la même dans tout l’onglet.
   const CAT_COLORS = () => ({
-    '10 km': SR.col.blue, Semi: SR.col.aqua, '20 km': dash.colors[6], Marathon: dash.colors[4],
-    'Paris-Versailles': dash.colors[3], Trail: dash.colors[5], 'Relais et autres': SR.col.muted,
+    '10 km': SR.col.blue, Semi: SR.col.aqua, '20 km': dash.colors[3], Marathon: dash.colors[4],
+    'Paris-Versailles': dash.colors[6], Trail: dash.colors[5], 'Relais et autres': SR.col.muted,
   });
   const catColor = (colors, c) => colors[c] || SR.col.muted;
 

@@ -232,7 +232,7 @@
     svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', axisY).attr('y2', axisY).style('stroke', SR.col.axis).attr('stroke-width', 1);
     if (g.target_s) {
       svg.append('rect').attr('x', x(g.target_s)).attr('y', axisY - 10).attr('width', Math.max(0, W - m.r - x(g.target_s))).attr('height', 20)
-        .attr('rx', 4).style('fill', SR.col.orange).attr('fill-opacity', 0.1);
+        .attr('rx', 10).style('fill', 'var(--sr-brand)').attr('fill-opacity', 0.12);
     }
     const t0 = Math.ceil((lo - pad) / 30) * 30;
     for (let t = t0; t <= hi + pad; t += 30) {

@@ -868,12 +868,12 @@
   }
 
   /* ================= Récap partageable ================= */
-  const SANS = 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
-  const SERIF = '"Newsreader", ui-serif, Georgia, "Times New Roman", serif';
+  // Manrope, la police d’ALLURE et du site ; les primes (′ ″) viennent de la police système.
+  const SANS = '"Manrope", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
   let fontsOk = false;
   const loadFonts = () => {
     if (fontsOk || !document.fonts || !document.fonts.load) return Promise.resolve();
-    return Promise.all([document.fonts.load(`400 120px ${SERIF}`), document.fonts.load(`500 120px ${SERIF}`)])
+    return Promise.all([500, 600, 700, 800].map((w) => document.fonts.load(`${w} 120px ${SANS}`)))
       .then(() => {
         fontsOk = true;
       })
@@ -964,17 +964,19 @@
     const W = 1080;
     const H = 1920;
     const P = 84;
-    const ORANGE = '#f0743c';
-    const ORANGE_SOFT = 'rgba(240, 116, 60, .22)';
-    const INK = '#f4f2ee';
-    const MUTED = 'rgba(244, 242, 238, .58)';
-    const FAINT = 'rgba(244, 242, 238, .12)';
+    // Aux couleurs d’ALLURE : bleu #3252df, texte blanc, accent ambre pour les records.
+    const BLUE = '#3252df';
+    const ACCENT = '#ffc94d';
+    const INK = '#ffffff';
+    const MUTED = 'rgba(255, 255, 255, .72)';
+    const FAINT = 'rgba(255, 255, 255, .16)';
     ctx.save();
     ctx.clearRect(0, 0, W, H);
-    // Fond : nuit profonde, halo orange en haut à droite, bleu en bas à gauche.
-    const bg = ctx.createLinearGradient(0, 0, 0, H);
-    bg.addColorStop(0, '#141412');
-    bg.addColorStop(1, '#0a0a09');
+    // Fond : dégradé bleu, halo clair en haut à droite, plus profond en bas à gauche.
+    const bg = ctx.createLinearGradient(0, 0, W * 0.4, H);
+    bg.addColorStop(0, '#3a5cf0');
+    bg.addColorStop(0.55, BLUE);
+    bg.addColorStop(1, '#2238b0');
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
     const glow = (x, y, r, c) => {
@@ -984,8 +986,8 @@
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, W, H);
     };
-    glow(W * 0.95, 120, 820, 'rgba(240, 116, 60, .26)');
-    glow(0, H * 0.92, 760, 'rgba(57, 135, 229, .14)');
+    glow(W * 0.98, 40, 900, 'rgba(255, 255, 255, .16)');
+    glow(0, H, 900, 'rgba(14, 24, 80, .35)');
     const font = (w, s, fam) => `${w} ${s}px ${fam}`;
     const textW = (s) => ctx.measureText(s).width;
     const fit = (s, max) => {
@@ -995,33 +997,63 @@
       return `${t.trimEnd()}…`;
     };
     ctx.textBaseline = 'alphabetic';
-    // En-tête.
-    ctx.fillStyle = ORANGE;
-    ctx.font = font(600, 28, SANS);
-    const eyebrow = row.kind === 'month' ? 'MON MOIS DE COURSE' : 'MON ANNÉE DE COURSE';
-    ctx.letterSpacing = '6px';
-    ctx.fillText(eyebrow, P, 170);
-    ctx.letterSpacing = '0px';
+    // Logo et nom, comme l’en-tête du site.
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(P, 92, 60, 60, 16);
     ctx.fillStyle = INK;
-    ctx.font = font(400, 118, SERIF);
-    ctx.fillText(cap1(row.label), P - 4, 300);
-    // Chiffre clé.
-    ctx.font = font(400, 300, SERIF);
-    const kmTxt = SR.n0(row.km);
-    ctx.fillText(kmTxt, P - 10, 590);
-    const kw = textW(kmTxt);
-    ctx.font = font(500, 64, SANS);
+    ctx.fill();
+    ctx.translate(P, 92);
+    ctx.scale(60 / 64, 60 / 64);
+    ctx.fillStyle = BLUE;
+    [['M38 15L48 15L36 49L26 49Z', 1], ['M27.5 22L34 22L25.5 46L19 46Z', 0.72], ['M19 29L23.5 29L17.5 45L13 45Z', 0.45]].forEach(([d, a]) => {
+      ctx.globalAlpha = a;
+      ctx.fill(new Path2D(d));
+    });
+    ctx.restore();
+    ctx.fillStyle = INK;
+    ctx.font = font(800, 44, SANS);
+    ctx.letterSpacing = '-1.5px';
+    ctx.fillText('sillage', P + 80, 130);
+    ctx.letterSpacing = '7px';
     ctx.fillStyle = MUTED;
-    ctx.fillText('km', P + kw + 6, 590);
+    ctx.font = font(700, 15, SANS);
+    ctx.fillText('RUNNING', P + 82, 152);
+    // En-tête.
+    ctx.fillStyle = MUTED;
+    ctx.font = font(700, 26, SANS);
+    const eyebrow = row.kind === 'month' ? 'MON MOIS DE COURSE' : 'MON ANNÉE DE COURSE';
+    ctx.letterSpacing = '5px';
+    ctx.fillText(eyebrow, P, 246);
+    ctx.letterSpacing = '-4px';
+    ctx.fillStyle = INK;
+    ctx.font = font(800, 108, SANS);
+    ctx.fillText(cap1(row.label), P - 4, 356);
+    // Chiffre clé.
+    ctx.letterSpacing = '-12px';
+    ctx.font = font(800, 280, SANS);
+    const kmTxt = SR.n0(row.km);
+    ctx.fillText(kmTxt, P - 12, 628);
+    const kw = textW(kmTxt);
+    ctx.letterSpacing = '0px';
+    ctx.font = font(700, 62, SANS);
+    ctx.fillStyle = MUTED;
+    ctx.fillText('km', P + kw + 6, 628);
     // Comparaison avec un an plus tôt.
     if (row.cmp_km > 0) {
       const delta = row.km / row.cmp_km - 1;
-      ctx.font = font(500, 32, SANS);
       const lead = `${delta >= 0 ? '+' : '−'}${SR.n0(Math.abs(delta) * 100)} %`;
-      ctx.fillStyle = delta >= 0 ? ORANGE : INK;
-      ctx.fillText(lead, P, 660);
+      ctx.font = font(800, 30, SANS);
+      const lw = textW(lead);
+      ctx.fillStyle = 'rgba(255, 255, 255, .18)';
+      ctx.beginPath();
+      ctx.roundRect(P, 666, lw + 36, 50, 25);
+      ctx.fill();
+      ctx.fillStyle = INK;
+      ctx.fillText(lead, P + 18, 701);
       ctx.fillStyle = MUTED;
-      ctx.fillText(` par rapport à ${row.cmp_label}${row.partial ? ' à la même date' : ''}`, P + textW(lead), 660);
+      ctx.font = font(600, 30, SANS);
+      ctx.fillText(fit(`par rapport à ${row.cmp_label}${row.partial ? ' à la même date' : ''}`, W - 2 * P - lw - 54), P + lw + 54, 701);
     }
     // Quatre chiffres.
     const stats = [
@@ -1034,27 +1066,29 @@
     stats.forEach(([v, l], i) => {
       const x = P + i * colW;
       ctx.fillStyle = INK;
-      let fs = 60;
-      ctx.font = font(400, fs, SERIF);
-      while (fs > 40 && textW(v) > colW - 18) {
+      let fs = 56;
+      ctx.letterSpacing = '-1.5px';
+      ctx.font = font(800, fs, SANS);
+      while (fs > 38 && textW(v) > colW - 18) {
         fs -= 2;
-        ctx.font = font(400, fs, SERIF);
+        ctx.font = font(800, fs, SANS);
       }
-      ctx.fillText(fit(v, colW - 16), x, 790);
+      ctx.fillText(fit(v, colW - 16), x, 820);
+      ctx.letterSpacing = '0px';
       ctx.fillStyle = MUTED;
-      ctx.font = font(500, 26, SANS);
-      ctx.fillText(fit(l, colW - 16), x, 832);
+      ctx.font = font(600, 25, SANS);
+      ctx.fillText(fit(l, colW - 16), x, 860);
     });
     // Carte de chaleur des parcours de la période.
-    const mapY = 880;
-    const mapH = 480;
-    const rr = 28;
+    const mapY = 904;
+    const mapH = 440;
+    const rr = 32;
     ctx.save();
     ctx.beginPath();
     ctx.roundRect(P, mapY, W - 2 * P, mapH, rr);
-    ctx.fillStyle = 'rgba(255,255,255,.035)';
+    ctx.fillStyle = 'rgba(10, 20, 70, .22)';
     ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,.08)';
+    ctx.strokeStyle = 'rgba(255,255,255,.16)';
     ctx.lineWidth = 2;
     ctx.stroke();
     ctx.clip();
@@ -1100,7 +1134,7 @@
       ctx.globalCompositeOperation = 'lighter';
       ctx.lineJoin = 'round';
       ctx.lineCap = 'round';
-      ctx.strokeStyle = row.kind === 'year' ? 'rgba(240, 116, 60, .30)' : 'rgba(240, 116, 60, .55)';
+      ctx.strokeStyle = row.kind === 'year' ? 'rgba(160, 185, 255, .30)' : 'rgba(170, 195, 255, .55)';
       ctx.lineWidth = row.kind === 'year' ? 3 : 4;
       tracks.forEach((p) => {
         ctx.beginPath();
@@ -1111,12 +1145,12 @@
     }
     ctx.restore();
     ctx.fillStyle = MUTED;
-    ctx.font = font(500, 24, SANS);
+    ctx.font = font(600, 24, SANS);
     const placeTxt = list.length ? `${SR.n0(list.length)} parcours · ${SR.n0(row.days)} jours de course` : routes ? `${SR.n0(row.days)} jours de course` : 'Parcours en cours de chargement';
     ctx.fillText(placeTxt, P, mapY + mapH + 44);
     // Barres : km par jour (mois) ou par mois (année).
-    const barsY = 1468;
-    const barsH = 132;
+    const barsY = 1436;
+    const barsH = 124;
     const ser = row.series;
     const maxKm = Math.max(1, ...ser.map((x) => x.km));
     const gap = row.kind === 'month' ? 6 : 14;
@@ -1124,14 +1158,14 @@
     ser.forEach((x, i) => {
       const bx = P + i * (bwid + gap);
       const h = (x.km / maxKm) * barsH;
-      ctx.fillStyle = x.future ? FAINT : x.km > 0 ? ORANGE : 'rgba(244,242,238,.10)';
+      ctx.fillStyle = x.future ? 'rgba(255,255,255,.08)' : x.km > 0 ? INK : FAINT;
       const hh = x.km > 0 ? Math.max(6, h) : 4;
       ctx.beginPath();
       ctx.roundRect(bx, barsY + barsH - hh, bwid, hh, Math.min(6, bwid / 2));
       ctx.fill();
     });
     ctx.fillStyle = MUTED;
-    ctx.font = font(500, 22, SANS);
+    ctx.font = font(600, 22, SANS);
     ser.forEach((x, i) => {
       const show = row.kind === 'year' || i === 0 || (i + 1) % 5 === 0;
       if (!show) return;
@@ -1146,25 +1180,26 @@
     });
     if (row.long_km && lines.length < 3) lines.push(['Plus longue sortie', `${SR.n1(row.long_km)} km`, false]);
     if (row.fast_pace && lines.length < 3) lines.push(['Sortie la plus rapide', `${SR.pace(row.fast_pace)}/km sur ${SR.n1(row.fast_km)} km`, false]);
-    let ly = 1706;
+    let ly = 1680;
     lines.slice(0, 3).forEach(([l, v, hot]) => {
-      ctx.fillStyle = hot ? ORANGE : 'rgba(244,242,238,.35)';
+      ctx.fillStyle = hot ? ACCENT : 'rgba(255,255,255,.45)';
       ctx.beginPath();
       ctx.arc(P + 8, ly - 10, 7, 0, Math.PI * 2);
       ctx.fill();
-      ctx.font = font(500, 32, SANS);
       ctx.fillStyle = INK;
-      const vw = (ctx.font = font(500, 32, SANS), textW(v));
-      ctx.fillText(fit(l, W - 2 * P - vw - 70), P + 32, ly);
+      ctx.font = font(800, 32, SANS);
+      const vw = textW(v);
       ctx.fillText(v, W - P - vw, ly);
+      ctx.font = font(600, 32, SANS);
+      ctx.fillText(fit(l, W - 2 * P - vw - 70), P + 32, ly);
       ly += 52;
     });
     // Pied.
     ctx.fillStyle = MUTED;
-    ctx.font = font(500, 24, SANS);
-    ctx.fillText('sillage.alexandrebarreau.fr', P, H - 48);
-    const asof = row.partial ? `au ${SR.dshort(row.end)}` : 'Mes perfs';
-    ctx.fillText(asof, W - P - textW(asof), H - 48);
+    ctx.font = font(600, 24, SANS);
+    ctx.fillText('sillage.alexandrebarreau.fr', P, H - 52);
+    const asof = row.partial ? `au ${SR.dshort(row.end)}` : 'Mes performances';
+    ctx.fillText(asof, W - P - textW(asof), H - 52);
     ctx.restore();
   }
 

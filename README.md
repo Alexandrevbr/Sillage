@@ -1,6 +1,6 @@
 # Sillage
 
-Mes courses Strava depuis 2018 : volume, allures, cardio, dénivelé, compétitions et gestion de course,
+Mes performances en course à pied depuis 2018 : volume, allures, cardio, dénivelé, compétitions et gestion de course,
 préparation de la prochaine course objectif, charge d’entraînement, séances clés, carte, boucles et
 segments, et un récap à partager en story.
 En ligne sur **https://sillage.alexandrebarreau.fr**.
@@ -69,6 +69,6 @@ node scripts/check.cjs   # recalcule tous les calculs du site sur docs/data/
 | `sync/journal.md` | une ligne par nuit : ce qui a changé, compétitions repérées, échecs |
 | `sync/state.json` | mémoire de la synchro (sorties sans cardio, dernière synchro) |
 
-Police : Newsreader (SIL Open Font License). Graphiques : d3 (ISC). Carte : Leaflet (BSD 2-Clause),
+Police : Manrope, comme ALLURE (SIL Open Font License). Graphiques : d3 (ISC). Carte : Leaflet (BSD 2-Clause),
 MapLibre GL JS (BSD 3-Clause) et maplibre-gl-leaflet (ISC) ; fond de carte [OpenFreeMap](https://openfreemap.org)
 (gratuit, sans clé), © OpenMapTiles, données © OpenStreetMap contributors.
