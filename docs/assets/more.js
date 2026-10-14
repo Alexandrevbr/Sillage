@@ -600,6 +600,33 @@
   };
   const loopName = (l) => l.name || `${l.kind} de ${SR.n1(l.km)} km`;
 
+  // Vignettes : le croquis du parcours s’affiche tout de suite, puis la vraie carte (photographiée par map.js) le remplace.
+  const thumbs = new Map(); // clé de boucle → url de l’image
+  const putThumb = (btn, url) => {
+    const fig = btn.querySelector('.sr-loop__fig');
+    if (!fig) return;
+    let img = fig.querySelector('img');
+    if (!img) {
+      img = document.createElement('img');
+      img.alt = '';
+      img.decoding = 'async';
+      fig.append(img);
+    }
+    img.onload = () => {
+      fig.classList.add('has-map');
+      const credit = $('#loops-credit');
+      if (credit) credit.hidden = false;
+    };
+    img.src = url;
+  };
+  const onThumb = (key, url) => {
+    const old = thumbs.get(key);
+    thumbs.set(key, url);
+    const btn = [...root.querySelectorAll('#c-loops .sr-loop')].find((x) => x.dataset.key === key);
+    if (btn) putThumb(btn, url);
+    if (old) setTimeout(() => URL.revokeObjectURL(old), 2000);
+  };
+
   function drawLoops() {
     const box = $('#c-loops');
     const d = ready(box, ['loops']);
@@ -617,7 +644,10 @@
         btn.dataset.key = l.key;
         const sub = SR.el('span', 'sr-loop__sub');
         sub.append(b(`${SR.n0(l.n)} passages`), txt(l.name ? ` · ${SR.n1(l.km)} km` : l.city ? ` · ${l.city}` : ''));
-        btn.append(sketch(l.shape), SR.el('span', 'sr-loop__name', loopName(l)), sub);
+        const fig = SR.el('span', 'sr-loop__fig');
+        fig.append(sketch(l.shape));
+        btn.append(fig, SR.el('span', 'sr-loop__name', loopName(l)), sub);
+        if (thumbs.has(l.key)) putThumb(btn, thumbs.get(l.key));
         btn.addEventListener('click', () => {
           ui.loop = l.key;
           box.querySelectorAll('.sr-loop').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.key === l.key)));
@@ -629,11 +659,14 @@
     }
     box.querySelectorAll('.sr-loop').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.key === ui.loop)));
     box.classList.remove('dash-skeleton');
+    // Le tracé de référence de chaque boucle (son premier passage), sur fond de carte.
+    if (SR.loopThumbs) SR.loopThumbs(loops.map((l) => ({ key: l.key, id: l.ids[0], shape: l.shape })), onThumb);
     enter(box);
   }
 
   // Passages successifs sur un même parcours : allure (plus rapide en haut), couleur selon la FC, tendance en orange.
-  const passChart = (box, passes, { valueOf, label, aria, fmt }) => {
+  // onPick(passage | null) : passage survolé ou touché, pour le montrer ailleurs (carte de la boucle).
+  const passChart = (box, passes, { valueOf, label, aria, fmt, onPick }) => {
     const rows = passes.filter((p) => valueOf(p) != null).map((p) => ({ ...p, t: SR.utc(p.date), v: valueOf(p) }));
     const W = SR.width(box);
     const H = Number(getComputedStyle(box).getPropertyValue('--h').replace('px', '')) || 250;
@@ -683,7 +716,10 @@
         ...(r.hr ? [{ label: 'FC moyenne', value: `${SR.n0(r.hr)} bpm` }] : []),
         ...(r.mpb ? [{ label: 'Mètres par battement', value: SR.n2(r.mpb) }] : []),
       ],
-    }));
+    }), onPick ? (event, r) => onPick(r) : null, onPick ? (event) => {
+      // Au doigt, le passage touché reste affiché jusqu’au suivant.
+      if (event.pointerType !== 'touch') onPick(null);
+    } : null);
     return { color, hrs };
   };
   const hrLegend = (el, hrs) => {
@@ -733,10 +769,28 @@
       parts.push(s2);
     }
     st.replaceChildren(...parts);
-    const { hrs } = passChart(box, ps, { valueOf: (p) => p.pace_s, label: 'allure', aria: `Allure de chaque passage sur la boucle ${loopName(l)}`, fmt: SR.pace });
+    // Carte de la boucle : tous les passages en orange, le meilleur en bleu, ou celui montré dans le graphique.
+    const bestP = ps.reduce((a, p) => (p.pace_s && (!a || p.pace_s < a.pace_s) ? p : a), null) || ps[0];
+    const mapLegend = $('#loop-maplegend');
+    let shown = null;
+    const showPass = (p) => {
+      const id = p ? p.id : null;
+      if (id === shown) return;
+      shown = id;
+      if (SR.loopPick) SR.loopPick(id);
+      const q = p || bestP;
+      mapLegend.replaceChildren(
+        legendItem(SR.col.orange, `les ${SR.n0(l.n)} passages`, 'line'),
+        legendItem(SR.col.blue, `${p ? 'passage du' : 'meilleur passage, le'} ${SR.dmed(q.date)} · ${SR.pace(q.pace_s)}/km`, 'line'),
+      );
+    };
+    if (SR.loopMap) SR.loopMap($('#c-loopmap'), { key: l.key, ids: l.ids, best: bestP.id });
+    shown = undefined;
+    showPass(null);
+    const { hrs } = passChart(box, ps, {
+      valueOf: (p) => p.pace_s, label: 'allure', aria: `Allure de chaque passage sur la boucle ${loopName(l)}`, fmt: SR.pace, onPick: showPass,
+    });
     hrLegend($('#loop-legend'), hrs);
-    const btn = $('#loop-map');
-    btn.onclick = () => SR.mapFocus && SR.mapFocus(l.ids, l.name ? `${l.name} · ${SR.n1(l.km)} km` : loopName(l));
     enter(box);
   }
 

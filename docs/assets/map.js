@@ -1,4 +1,5 @@
-/* Onglet Carte : toutes les sorties en carte de chaleur, et le tracé de chaque compétition.
+/* Onglet Carte : toutes les sorties en carte de chaleur, le tracé de chaque compétition, la carte de la boucle
+ * habituelle choisie et les vignettes des boucles.
  * Leaflet (assets/leaflet) dessine les tracés ; le fond de carte vectoriel OpenFreeMap (gratuit, sans clé) est dessiné
  * par MapLibre GL via le pont maplibre-gl-leaflet (assets/maplibre). Bibliothèques et tracés (data/routes.json) ne sont
  * chargés qu’à l’ouverture de l’onglet. */
@@ -6,8 +7,7 @@
   const SR = window.SR;
   const root = SR.root;
   const $ = (s) => root.querySelector(s);
-  const ui = { range: 'all', kind: 'all', sel: null, group: null };
-  let pendingFocus = null;
+  const ui = { range: 'all', kind: 'all', sel: null };
   const page = () => document.getElementById('carte');
   const visible = () => page() && !page().hidden;
   const run = (fn) => {
@@ -21,7 +21,7 @@
   };
 
   /* ---------- Leaflet et le fond de carte à la demande ---------- */
-  // La carte et les tracés s’affichent dès que Leaflet est là ; le fond de carte (MapLibre, plus lourd) arrive ensuite.
+  // Les cartes et les tracés s’affichent dès que Leaflet est là ; le fond de carte (MapLibre, plus lourd) arrive ensuite.
   let leaflet = 'idle';
   let gl = 'idle';
   const script = (src) => new Promise((resolve, reject) => {
@@ -46,14 +46,17 @@
     }, () => {
       leaflet = 'error';
     }).then(() => {
-      if (visible()) run(drawMap);
+      if (!visible()) return;
+      run(drawMap);
+      run(drawLoopMap);
     });
     // Le pont a besoin de Leaflet et de MapLibre.
     Promise.all([lf, script('assets/maplibre/maplibre-gl.js')])
       .then(() => script('assets/maplibre/leaflet-maplibre-gl.js'))
       .then(() => {
         gl = 'ready';
-        run(setBase);
+        [map, lm.map].forEach((m) => m && run(() => setBase(m)));
+        run(renderThumbs);
       }, () => {
         gl = 'error';
       });
@@ -110,6 +113,13 @@
     runs.forEach((r) => count.set(r.year, (count.get(r.year) || 0) + 1));
     years = [...count.entries()].filter(([, n]) => n >= 20).map(([y]) => y).sort((a, b) => b - a).slice(0, 3);
   };
+  // Tracés décodés, dès que les données sont là (null sinon).
+  const routesReady = () => {
+    const res = dash.data('map_runs');
+    if (res.status !== 'ok') return null;
+    if (!runs) prepare(res.data);
+    return runs;
+  };
 
   // Zone habituelle : la case de 0,1° d’où partent le plus de sorties, puis les tracés partis à moins de ~25 km, sans les points extrêmes.
   const homeBounds = () => {
@@ -131,18 +141,12 @@
     const q = (a, f) => a[Math.min(a.length - 1, Math.max(0, Math.round(f * (a.length - 1))))];
     return [[q(lats, 0.05), q(lngs, 0.05)], [q(lats, 0.95), q(lngs, 0.95)]];
   };
+  const unionBox = (rs) => [
+    [Math.min(...rs.map((r) => r.box[0][0])), Math.min(...rs.map((r) => r.box[0][1]))],
+    [Math.max(...rs.map((r) => r.box[1][0])), Math.max(...rs.map((r) => r.box[1][1]))],
+  ];
 
-  /* ---------- Carte ---------- */
-  let map = null;
-  let renderer = null;
-  let base = null; // fond de carte (couche MapLibre)
-  let baseUrl = '';
-  let heat = null;
-  let selLayer = null;
-  let home = null;
-  let theme = null;
-  let sig = '';
-  let touch = false;
+  /* ---------- Fond de carte ---------- */
   const isDark = () => {
     const c = d3.rgb(SR.rgb(SR.col.panel, 'rgb(255, 255, 255)'));
     return 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b < 128;
@@ -160,14 +164,17 @@
     }
   };
 
-  // Fond de carte clair ou sombre selon le thème. Sans WebGL, ou si le service ne répond pas, les tracés restent sur le fond du panneau.
-  function setBase() {
-    if (!map || gl !== 'ready') return;
+  // Fond clair ou sombre selon le thème, pour chaque carte Leaflet. Sans WebGL, ou si le service ne répond pas,
+  // les tracés restent sur le fond du panneau.
+  const bases = new Map(); // carte Leaflet → { layer, url }
+  function setBase(m) {
+    if (!m || gl !== 'ready') return;
     const url = STYLE(isDark());
-    if (base) {
-      if (url !== baseUrl) {
-        baseUrl = url;
-        base.getMaplibreMap().setStyle(url);
+    const cur = bases.get(m);
+    if (cur) {
+      if (cur.url !== url) {
+        cur.url = url;
+        cur.layer.getMaplibreMap().setStyle(url);
       }
       return;
     }
@@ -177,47 +184,42 @@
     }
     const layer = window.L.maplibreGL({ style: url, attributionControl: { customAttribution: ATTRIBUTION } });
     try {
-      layer.addTo(map);
+      layer.addTo(m);
     } catch (err) {
       gl = 'error';
-      map.off(layer.getEvents(), layer);
+      m.off(layer.getEvents(), layer);
       if (layer.getContainer()) layer.getContainer().remove();
       return;
     }
-    base = layer;
-    baseUrl = url;
+    bases.set(m, { layer, url });
     const glMap = layer.getMaplibreMap();
     // Tuiles momentanément indisponibles : rien à signaler, la carte reste utilisable.
     glMap.on('error', () => {});
     glMap.once('load', () => layer.getContainer().classList.add('is-on'));
   }
 
-  const build = (box) => {
+  // Carte Leaflet aux réglages du site. Sur mobile, un doigt fait défiler la page, deux doigts déplacent et zooment
+  // la carte ; à la souris, la molette ne zoome qu’après un clic dans la carte.
+  let touch = false;
+  const newMap = (box) => {
     const L = window.L;
     touch = L.Browser.mobile || (L.Browser.touch && !(window.matchMedia && window.matchMedia('(pointer: fine)').matches));
     box.replaceChildren();
-    renderer = L.canvas({ padding: 0.4, tolerance: touch ? 10 : 5 });
-    map = L.map(box, {
+    const renderer = L.canvas({ padding: 0.4, tolerance: touch ? 10 : 5 });
+    const m = L.map(box, {
       renderer,
       preferCanvas: true,
       zoomSnap: 0.25,
       zoomDelta: 0.5,
       minZoom: 3,
       maxZoom: 18,
-      // Sur mobile, un doigt fait défiler la page ; deux doigts déplacent et zooment la carte.
       dragging: !touch,
       scrollWheelZoom: false,
       attributionControl: true,
     });
-    map.attributionControl.setPrefix(false);
-    heat = L.layerGroup().addTo(map);
-    selLayer = L.layerGroup().addTo(map);
-    // Molette active seulement après un clic dans la carte, pour ne pas gêner le défilement de la page.
-    map.on('click', () => map.scrollWheelZoom.enable());
-    box.addEventListener('mouseleave', () => map.scrollWheelZoom.disable());
-    map.on('click', (e) => {
-      if (!e.originalEvent || !e.originalEvent.defaultPrevented) select(null, false);
-    });
+    m.attributionControl.setPrefix(false);
+    m.on('click', () => m.scrollWheelZoom.enable());
+    box.addEventListener('mouseleave', () => m.scrollWheelZoom.disable());
     if (touch) {
       const hint = SR.el('div', 'sr-maphint', 'Deux doigts pour déplacer la carte');
       box.append(hint);
@@ -229,9 +231,45 @@
         timer = setTimeout(() => hint.classList.remove('is-on'), 1400);
       }, { passive: true });
     }
+    return { map: m, renderer };
+  };
+
+  // Tracé mis en avant : liseré couleur du fond, trait bleu, départ (rond vide) et arrivée (rond plein).
+  const drawTrace = (group, rend, r) => {
+    const L = window.L;
+    const blue = SR.rgb(SR.col.blue, 'rgb(42, 120, 214)');
+    const panel = SR.rgb(SR.col.panel, 'rgb(255, 255, 255)');
+    group.addLayer(L.polyline(r.pts, { renderer: rend, color: panel, weight: 7.5, opacity: 0.95, interactive: false }));
+    group.addLayer(L.polyline(r.pts, { renderer: rend, color: blue, weight: 3.5, opacity: 1, interactive: false }));
+    group.addLayer(L.circleMarker(r.pts[0], { renderer: rend, radius: 5, color: blue, weight: 2.5, fillColor: panel, fillOpacity: 1, interactive: false }));
+    group.addLayer(L.circleMarker(r.pts[r.pts.length - 1], { renderer: rend, radius: 5, color: panel, weight: 2, fillColor: blue, fillOpacity: 1, interactive: false }));
+  };
+
+  const failBox = (box, msg) => {
+    box.classList.remove('dash-skeleton');
+    box.replaceChildren(SR.el('div', 'sr-failed', msg));
+  };
+
+  /* ---------- Carte de toutes les sorties ---------- */
+  let map = null;
+  let renderer = null;
+  let heat = null;
+  let selLayer = null;
+  let home = null;
+  let theme = null;
+  let sig = '';
+
+  const build = (box) => {
+    const L = window.L;
+    ({ map, renderer } = newMap(box));
+    heat = L.layerGroup().addTo(map);
+    selLayer = L.layerGroup().addTo(map);
+    map.on('click', (e) => {
+      if (!e.originalEvent || !e.originalEvent.defaultPrevented) select(null, false);
+    });
     home = homeBounds();
     map.fitBounds(home, { padding: [12, 12] });
-    setBase();
+    setBase(map);
   };
 
   const filtered = () => runs.filter((r) => (ui.kind === 'races' ? r.race : true)
@@ -263,39 +301,16 @@
     drawSel(false);
   };
 
-  // Tracé choisi : liseré couleur du fond, trait bleu, départ (rond vide) et arrivée (rond plein).
-  // Une boucle choisie plus bas dans l’onglet : tous ses passages en bleu.
   const drawSel = (fly) => {
-    const L = window.L;
     selLayer.clearLayers();
-    const blue = SR.rgb(SR.col.blue, 'rgb(42, 120, 214)');
-    const panel = SR.rgb(SR.col.panel, 'rgb(255, 255, 255)');
-    if (ui.group) {
-      const rs = ui.group.ids.map((id) => byId.get(id)).filter(Boolean);
-      if (!rs.length) return;
-      rs.forEach((r) => selLayer.addLayer(L.polyline(r.pts, { renderer, color: panel, weight: 6, opacity: 0.9, interactive: false })));
-      rs.forEach((r) => selLayer.addLayer(L.polyline(r.pts, { renderer, color: blue, weight: 2.5, opacity: 0.85, interactive: false })));
-      if (fly) {
-        const s = Math.min(...rs.map((r) => r.box[0][0]));
-        const w = Math.min(...rs.map((r) => r.box[0][1]));
-        const n = Math.max(...rs.map((r) => r.box[1][0]));
-        const e = Math.max(...rs.map((r) => r.box[1][1]));
-        map.flyToBounds([[s, w], [n, e]], { padding: [24, 24], maxZoom: 15, duration: 0.7 });
-      }
-      return;
-    }
     const r = ui.sel && byId.get(ui.sel);
     if (!r) return;
-    selLayer.addLayer(L.polyline(r.pts, { renderer, color: panel, weight: 7.5, opacity: 0.95, interactive: false }));
-    selLayer.addLayer(L.polyline(r.pts, { renderer, color: blue, weight: 3.5, opacity: 1, interactive: false }));
-    selLayer.addLayer(L.circleMarker(r.pts[0], { renderer, radius: 5, color: blue, weight: 2.5, fillColor: panel, fillOpacity: 1, interactive: false }));
-    selLayer.addLayer(L.circleMarker(r.pts[r.pts.length - 1], { renderer, radius: 5, color: panel, weight: 2, fillColor: blue, fillOpacity: 1, interactive: false }));
+    drawTrace(selLayer, renderer, r);
     if (fly) map.flyToBounds(r.box, { padding: [30, 30], maxZoom: 15, duration: 0.7 });
   };
 
   const select = (id, fly) => {
     ui.sel = id;
-    ui.group = null;
     drawSel(fly);
     renderInfo();
     renderList();
@@ -323,11 +338,6 @@
       select(null, false);
       map.flyToBounds(home, { padding: [12, 12], duration: 0.7 });
     });
-    if (ui.group) {
-      reset.textContent = 'Tout voir';
-      el.replaceChildren(SR.el('span', 'sr-mapinfo__title', ui.group.label), SR.el('span', null, `${SR.n0(ui.group.ids.length)} passages en bleu`), reset);
-      return;
-    }
     if (!r) {
       el.replaceChildren(SR.el('span', null, touch ? 'Touchez un tracé pour voir la sortie' : 'Cliquez sur un tracé pour voir la sortie'), reset);
       return;
@@ -403,8 +413,7 @@
   onSeg('map-kind', 'kind');
 
   const fail = (box, msg) => {
-    box.classList.remove('dash-skeleton');
-    box.replaceChildren(SR.el('div', 'sr-failed', msg));
+    failBox(box, msg);
     $('#c-maprace').classList.remove('dash-skeleton');
   };
 
@@ -421,7 +430,7 @@
       return;
     }
     if (res.status !== 'ok' || leaflet !== 'ready') return;
-    if (!runs) prepare(res.data);
+    routesReady();
     if (!runs.length) {
       fail(box, 'Aucun tracé GPS pour l’instant');
       return;
@@ -430,16 +439,12 @@
     if (!map) {
       build(box);
       buildRange();
-      if (pendingFocus) {
-        ui.group = pendingFocus;
-        pendingFocus = null;
-      }
     }
     map.invalidateSize();
     const dark = isDark();
     if (dark !== theme) {
       theme = dark;
-      setBase();
+      setBase(map);
       sig = '';
     }
     const s = `${ui.range}|${ui.kind}|${theme}`;
@@ -450,23 +455,189 @@
       renderList();
       renderInfo();
     }
+    // Les vignettes des boucles attendaient peut-être les tracés.
+    run(renderThumbs);
   }
 
-  // Met en avant un ensemble de tracés (une boucle habituelle) et remonte jusqu’à la carte.
-  SR.mapFocus = (ids, label) => {
-    const g = { ids, label };
-    const card = $('#card-map');
-    if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    if (!map) {
-      pendingFocus = g;
+  /* ---------- Carte de la boucle choisie (section Boucles habituelles) ---------- */
+  // Tous les passages en orange ; en bleu, le meilleur, ou le passage montré dans le graphique.
+  const lm = { box: null, req: null, map: null, renderer: null, all: null, sel: null, sig: '', pick: null };
+  // req : { key, ids (passages), best (id du meilleur passage) }
+  SR.loopMap = (box, req) => {
+    lm.box = box;
+    lm.req = req;
+    run(drawLoopMap);
+  };
+  SR.loopPick = (id) => {
+    const v = id || null;
+    if (lm.pick === v) return;
+    lm.pick = v;
+    if (lm.map) drawLoopSel();
+  };
+  const drawLoopSel = () => {
+    lm.sel.clearLayers();
+    const r = byId.get(lm.pick) || byId.get(lm.req.best) || byId.get(lm.req.ids[0]);
+    if (r) drawTrace(lm.sel, lm.renderer, r);
+  };
+  function drawLoopMap() {
+    const box = lm.box;
+    const req = lm.req;
+    if (!box || !req || !visible()) return;
+    const res = dash.data('map_runs');
+    if (res.status === 'error') {
+      failBox(box, 'Failed to load');
       return;
     }
-    ui.sel = null;
-    ui.group = g;
-    drawSel(true);
-    renderInfo();
-    renderList();
+    loadLibs();
+    if (leaflet === 'error') {
+      failBox(box, 'Carte indisponible');
+      return;
+    }
+    if (leaflet !== 'ready' || !routesReady()) return;
+    const rs = req.ids.map((id) => byId.get(id)).filter(Boolean);
+    if (!rs.length) return;
+    const L = window.L;
+    box.classList.remove('dash-skeleton');
+    const fresh = !lm.map;
+    if (fresh) {
+      ({ map: lm.map, renderer: lm.renderer } = newMap(box));
+      lm.all = L.layerGroup().addTo(lm.map);
+      lm.sel = L.layerGroup().addTo(lm.map);
+    }
+    lm.map.invalidateSize();
+    const s = `${req.key}|${isDark()}`;
+    if (s !== lm.sig) {
+      const moved = fresh || !lm.sig.startsWith(`${req.key}|`);
+      lm.sig = s;
+      if (moved) lm.pick = null;
+      lm.all.clearLayers();
+      const orange = SR.rgb(SR.col.orange, 'rgb(235, 104, 52)');
+      const op = rs.length > 20 ? 0.4 : 0.55;
+      rs.forEach((r) => lm.all.addLayer(L.polyline(r.pts, { renderer: lm.renderer, color: orange, weight: 2, opacity: op, interactive: false })));
+      drawLoopSel();
+      if (fresh) lm.map.fitBounds(unionBox(rs), { padding: [16, 16], maxZoom: 16 });
+      else if (moved) lm.map.flyToBounds(unionBox(rs), { padding: [16, 16], maxZoom: 16, duration: 0.6 });
+    }
+    setBase(lm.map);
+  }
+
+  /* ---------- Vignettes des boucles ---------- */
+  // Une carte MapLibre hors écran, photographiée boucle par boucle : un vrai fond de carte dans chaque vignette.
+  // items : [{ key, id (passage dont on montre le tracé), shape (repli) }] ; onThumb(key, url de l’image).
+  const TW = 240;
+  const TH = 156;
+  let thumbReq = null;
+  let thumbBusy = false;
+  SR.loopThumbs = (items, onThumb) => {
+    const dark = isDark();
+    const key = `${items.map((it) => it.id).join(',')}|${dark}`;
+    if (!thumbReq || thumbReq.key !== key) thumbReq = { key, items, dark, onThumb, started: false };
+    else thumbReq.onThumb = onThumb;
+    loadLibs();
+    run(renderThumbs);
   };
+  function renderThumbs() {
+    const req = thumbReq;
+    if (!req || req.started || thumbBusy || gl !== 'ready' || !window.maplibregl || !routesReady()) return;
+    if (!webgl()) {
+      gl = 'error';
+      return;
+    }
+    req.started = true;
+    thumbBusy = true;
+    const host = document.createElement('div');
+    host.setAttribute('aria-hidden', 'true');
+    host.style.cssText = `position:fixed;left:${-TW - 200}px;top:0;width:${TW}px;height:${TH}px;pointer-events:none;`;
+    document.body.append(host);
+    let glm = null;
+    let over = false;
+    let loadTimer = null;
+    const done = () => {
+      if (over) return;
+      over = true;
+      clearTimeout(loadTimer);
+      if (glm) glm.remove();
+      host.remove();
+      thumbBusy = false;
+      if (thumbReq && !thumbReq.started) run(renderThumbs);
+    };
+    try {
+      glm = new window.maplibregl.Map({
+        container: host,
+        style: STYLE(req.dark),
+        interactive: false,
+        attributionControl: false,
+        fadeDuration: 0,
+        pixelRatio: Math.min(3, window.devicePixelRatio || 1),
+        canvasContextAttributes: { preserveDrawingBuffer: true },
+      });
+    } catch (err) {
+      done();
+      return;
+    }
+    glm.on('error', () => {});
+    loadTimer = setTimeout(done, 15000);
+    const orange = SR.rgb(SR.col.orange, 'rgb(235, 104, 52)');
+    const panel = SR.rgb(SR.col.panel, 'rgb(255, 255, 255)');
+    glm.once('load', () => {
+      clearTimeout(loadTimer);
+      if (over) return;
+      // Sans noms de rues ni de lieux : à cette taille, ils ne se lisent pas.
+      glm.getStyle().layers.forEach((l) => {
+        if (l.type === 'symbol') glm.setLayoutProperty(l.id, 'visibility', 'none');
+      });
+      glm.addSource('sr-loop', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+      const isLine = ['==', ['geometry-type'], 'LineString'];
+      const round = { 'line-cap': 'round', 'line-join': 'round' };
+      glm.addLayer({ id: 'sr-loop-casing', type: 'line', source: 'sr-loop', filter: isLine, layout: round, paint: { 'line-color': panel, 'line-width': 6, 'line-opacity': 0.9 } });
+      glm.addLayer({ id: 'sr-loop-line', type: 'line', source: 'sr-loop', filter: isLine, layout: round, paint: { 'line-color': orange, 'line-width': 3 } });
+      glm.addLayer({
+        id: 'sr-loop-start', type: 'circle', source: 'sr-loop', filter: ['==', ['geometry-type'], 'Point'],
+        paint: { 'circle-radius': 4, 'circle-color': panel, 'circle-stroke-color': orange, 'circle-stroke-width': 2 },
+      });
+      let i = 0;
+      const next = () => {
+        if (over) return;
+        if (thumbReq !== req || i >= req.items.length) {
+          done();
+          return;
+        }
+        const it = req.items[i++];
+        const r = byId.get(it.id);
+        const pts = r ? r.pts : it.shape;
+        if (!pts || pts.length < 2) {
+          next();
+          return;
+        }
+        const coords = pts.map((p) => [p[1], p[0]]);
+        glm.getSource('sr-loop').setData({
+          type: 'FeatureCollection',
+          features: [
+            { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: coords } },
+            { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: coords[0] } },
+          ],
+        });
+        const lngs = coords.map((c) => c[0]);
+        const lats = coords.map((c) => c[1]);
+        glm.fitBounds([[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]], { padding: 16, maxZoom: 15.5, animate: false });
+        let shot = false;
+        let timer = null;
+        const snap = () => {
+          if (shot || over) return;
+          shot = true;
+          clearTimeout(timer);
+          glm.getCanvas().toBlob((blob) => {
+            if (blob && thumbReq === req) run(() => req.onThumb(it.key, URL.createObjectURL(blob)));
+            next();
+          });
+        };
+        // Photo dès que les tuiles sont dessinées (au plus tard après 8 s).
+        timer = setTimeout(snap, 8000);
+        glm.once('idle', snap);
+      };
+      next();
+    });
+  }
 
   SR.pages = SR.pages || {};
   Object.assign(SR.pages, { carte: [drawMap] });

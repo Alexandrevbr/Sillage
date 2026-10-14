@@ -1043,7 +1043,27 @@
   }
   .sr-loop:hover { border-color: color-mix(in srgb, var(--color-fg) 30%, var(--color-border-line)); }
   .sr-loop[aria-pressed="true"] { border-color: var(--color-fg); box-shadow: inset 0 0 0 1px var(--color-fg); }
-  .sr-loop svg { display: block; width: 100%; height: auto; border-radius: calc(var(--cds-radius) - 2px); background: color-mix(in srgb, var(--color-fg) 4%, transparent); }
+  /* Vignette : croquis du parcours, remplacé en fondu par la carte photographiée dès qu’elle est prête. */
+  .sr-loop__fig {
+    position: relative;
+    display: block;
+    aspect-ratio: 240 / 156;
+    overflow: hidden;
+    border-radius: calc(var(--cds-radius) - 2px);
+    background: color-mix(in srgb, var(--color-fg) 4%, transparent);
+  }
+  .sr-loop__fig svg, .sr-loop__fig img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+  .sr-loop__fig img { object-fit: cover; opacity: 0; }
+  .sr-loop__fig.has-map img { opacity: 1; }
+  .sr-loop__fig.has-map svg { opacity: 0; }
+  @media (prefers-reduced-motion: no-preference) { .sr-loop__fig img, .sr-loop__fig svg { transition: opacity var(--cds-dur-slow) var(--cds-ease-out); } }
+  .sr-loops__credit { margin: 6px 0 0; text-align: right; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+  /* Carte de la boucle : au-dessus du graphique sur téléphone, à côté sur grand écran. */
+  .sr-loopbody { display: grid; gap: var(--cds-gap-lg); grid-template-columns: minmax(0, 1fr); }
+  .sr-loopbody__map { display: grid; gap: 8px; align-content: start; }
+  .sr .sr-map.sr-map--loop { height: 300px; }
+  @container sr (max-width: 560px) { .sr .sr-map.sr-map--loop { height: min(72vw, 300px); } }
+  @container sr (min-width: 880px) { .sr-loopbody { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); align-items: start; } }
   .sr-loop__name { font-weight: var(--cds-font-weight-medium); font-size: var(--cds-font-size-body); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .sr-loop__sub { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
   .sr-loop__sub b { color: var(--color-fg); font-weight: var(--cds-font-weight-medium); }
@@ -2217,17 +2237,25 @@
       <p class="sr-section__note">Les parcours que je refais : le même terrain, donc la meilleure mesure de forme</p>
     </div>
     <div class="sr-loops dash-skeleton" id="c-loops" data-source="loops" style="min-height: 180px"></div>
+    <p class="sr-loops__credit" id="loops-credit" hidden>Fonds de carte © OpenStreetMap · OpenFreeMap · © OpenMapTiles</p>
     <article class="sr-card" id="card-loop">
       <div class="sr-card__head">
         <div>
           <h3 class="sr-card__title" id="loop-title">Une boucle, passage après passage</h3>
           <p class="sr-card__note" id="loop-note">Allure de chaque passage, couleur selon la FC moyenne</p>
         </div>
-        <button type="button" class="sr-btn" id="loop-map">Voir sur la carte</button>
       </div>
       <p class="sr-stats" id="loop-stats"></p>
-      <div class="sr-legend" id="loop-legend"></div>
-      <div class="sr-chart dash-skeleton" id="c-loop" data-source="loops" style="--h: 260px"></div>
+      <div class="sr-loopbody">
+        <div class="sr-loopbody__map">
+          <div class="sr-map sr-map--loop dash-skeleton" id="c-loopmap" data-source="map_runs loops"></div>
+          <div class="sr-legend" id="loop-maplegend"></div>
+        </div>
+        <div class="sr-loopbody__chart">
+          <div class="sr-legend" id="loop-legend"></div>
+          <div class="sr-chart dash-skeleton" id="c-loop" data-source="loops" style="--h: 260px"></div>
+        </div>
+      </div>
     </article>
 
     <div class="sr-section" id="segments">
