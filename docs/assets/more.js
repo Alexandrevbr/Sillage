@@ -1163,7 +1163,7 @@
     ctx.fillStyle = MUTED;
     ctx.font = font(500, 24, SANS);
     ctx.fillText('sillage.alexandrebarreau.fr', P, H - 48);
-    const asof = row.partial ? `au ${SR.dshort(row.end)}` : 'Données Strava';
+    const asof = row.partial ? `au ${SR.dshort(row.end)}` : 'Mes perfs';
     ctx.fillText(asof, W - P - textW(asof), H - 48);
     ctx.restore();
   }

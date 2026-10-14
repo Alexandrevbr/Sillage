@@ -241,7 +241,7 @@ dash.calc('run_class', {
 
 dash.calc('easy_runs_class', {
   title: 'Footings : vrai facile ou zone grise',
-  description: 'Chaque footing avec cardio (3 km et plus, hors jours de compétition : pas d’échauffement ni de retour au calme) classé selon la part de son temps au-dessus de la zone 2 de Strava (zones 3 à 5) : facile sous 10 %, limite de 10 à 30 %, zone grise à partir de 30 %.',
+  description: 'Chaque footing avec cardio (3 km et plus, hors jours de compétition : pas d’échauffement ni de retour au calme) classé selon la part de son temps au-dessus de la zone 2 (zones 3 à 5) : facile sous 10 %, limite de 10 à 30 %, zone grise à partir de 30 %.',
   inputs: ['run_class'],
   fn: (run_class) => {
     const raceDays = new Set(run_class.filter((r) => r.kind === 'course').map((r) => r.day));
@@ -377,7 +377,7 @@ dash.calc('long_summary', {
 
 dash.calc('recov', {
   title: 'Récupération après chaque course',
-  description: 'Pour chaque compétition depuis 2024 : jours avant la séance dure suivante (séance de qualité, course, ou sortie d’effort relatif Strava d’au moins 70), et charge (efforts relatifs) des 7 jours d’après comparée aux 7 jours d’avant.',
+  description: 'Pour chaque compétition depuis 2024 : jours avant la séance dure suivante (séance de qualité, course, ou sortie d’effort relatif d’au moins 70), et charge (efforts relatifs) des 7 jours d’après comparée aux 7 jours d’avant.',
   inputs: ['race_results', 'run_class', 'load'],
   fn: (race_results, run_class, load) => {
     const day = (s) => {
@@ -499,7 +499,7 @@ dash.calc('laps_coverage', {
 
 dash.calc('effort_best', {
   title: 'Meilleurs efforts à l’entraînement et en course',
-  description: 'Pour chaque distance des meilleurs efforts Strava : record (date, en course ou non), meilleur temps des 12 derniers mois et des 30 derniers jours.',
+  description: 'Pour chaque distance de mes meilleurs temps : record (date, en course ou non), meilleur temps des 12 derniers mois et des 30 derniers jours.',
   inputs: ['efforts', 'runs', 'race_results'],
   fn: (efforts, runs, race_results) => {
     const order = ['400 m', '800 m', '1 km', '1 mile', '2 miles', '5 km', '10 km', '15 km', '10 miles', '20 km', 'Semi', '30 km', 'Marathon'];
@@ -524,7 +524,7 @@ dash.calc('effort_best', {
 
 dash.calc('effort_monthly', {
   title: 'Meilleurs efforts par mois',
-  description: 'Meilleur temps de chaque mois sur 1 km, 5 km et 10 km (meilleurs efforts Strava, courses comprises), converti en allure au kilomètre.',
+  description: 'Meilleur temps de chaque mois sur 1 km, 5 km et 10 km (meilleurs temps, courses comprises), converti en allure au kilomètre.',
   inputs: ['efforts', 'runs'],
   fn: (efforts, runs) => {
     const km = { '1 km': 1, '5 km': 5, '10 km': 10 };
@@ -541,7 +541,7 @@ dash.calc('effort_monthly', {
 
 dash.calc('map_runs', {
   title: 'Parcours',
-  description: 'Tracé simplifié (polyligne Strava) de chaque sortie de course à pied, avec sa date, sa distance, son allure et, pour une compétition, l’épreuve, la distance officielle et le chrono.',
+  description: 'Tracé simplifié (polyligne encodée) de chaque sortie de course à pied, avec sa date, sa distance, son allure et, pour une compétition, l’épreuve, la distance officielle et le chrono.',
   inputs: ['routes', 'runs', 'race_results'],
   fn: (routes, runs, race_results) => {
     const byId = new Map(runs.map((r) => [r.id, r]));

@@ -2,7 +2,7 @@
 
 dash.calc('runs', {
   title: 'Sorties de course à pied',
-  description: 'Les activités Run, TrailRun et VirtualRun de l’export Strava, avec km, allure, semaine, jour et lieu calculés.',
+  description: 'Les sorties de course à pied (route, trail et tapis) de mon historique, avec km, allure, semaine, jour et lieu calculés.',
   inputs: ['activities'],
   fn: (activities) => {
     const pays = { France: 'France', Italy: 'Italie', Spain: 'Espagne', Croatia: 'Croatie', Romania: 'Roumanie' };
@@ -248,7 +248,7 @@ dash.calc('longest', {
 
 dash.calc('race_results', {
   title: 'Résultats en compétition',
-  description: 'Chaque compétition avec son chrono (officiel s’il est connu, sinon temps écoulé Strava), sa distance officielle (10 km, 20 km, semi, marathon, 16,2 km pour Paris-Versailles, ou celle notée pour l’épreuve ; à défaut la distance GPS), son allure réelle (chrono ÷ distance officielle) et si c’était un record dans sa catégorie à ce moment-là.',
+  description: 'Chaque compétition avec son chrono (officiel s’il est connu, sinon temps écoulé), sa distance officielle (10 km, 20 km, semi, marathon, 16,2 km pour Paris-Versailles, ou celle notée pour l’épreuve ; à défaut la distance GPS), son allure réelle (chrono ÷ distance officielle) et si c’était un record dans sa catégorie à ce moment-là.',
   inputs: ['races', 'runs'],
   fn: (races, runs) => {
     const OFFICIAL = { '10 km': 10, Semi: 21.0975, '20 km': 20, Marathon: 42.195, 'Paris-Versailles': 16.2 };
@@ -429,7 +429,7 @@ dash.calc('cadence', {
 
 dash.calc('countries', {
   title: 'Pays',
-  description: 'Sorties et km par pays (d’après le lieu Strava de chaque sortie).',
+  description: 'Sorties et km par pays (d’après le lieu de départ de chaque sortie).',
   inputs: ['runs'],
   fn: (runs) => [...new Set(runs.map((r) => r.country).filter(Boolean))].map((country) => {
     const rs = runs.filter((r) => r.country === country);
@@ -439,7 +439,7 @@ dash.calc('countries', {
 
 dash.calc('cities', {
   title: 'Villes les plus courues',
-  description: 'Les 10 villes avec le plus de sorties (d’après le lieu Strava de chaque sortie).',
+  description: 'Les 10 villes avec le plus de sorties (d’après le lieu de départ de chaque sortie).',
   inputs: ['runs'],
   fn: (runs) => [...new Set(runs.filter((r) => r.city).map((r) => `${r.city}|${r.country}`))].map((key) => {
     const [city, country] = key.split('|');

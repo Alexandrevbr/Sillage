@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Sillage · Mes courses</title>
-<meta name="description" content="Toutes mes sorties Strava depuis 2018 : volume, allures, cardio, compétitions, préparation de mon prochain objectif et carte de mes parcours, mis à jour chaque nuit.">
+<meta name="description" content="Mes perfs en course à pied depuis 2018 : volume, allures, cardio, compétitions, préparation de mon prochain objectif et carte de mes parcours, mis à jour chaque nuit.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#f9f9f7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0b0b0b" media="(prefers-color-scheme: dark)">
@@ -16,7 +16,7 @@
 <meta property="og:locale" content="fr_FR">
 <meta property="og:site_name" content="Sillage">
 <meta property="og:title" content="Sillage · Mes courses">
-<meta property="og:description" content="Toutes mes sorties Strava depuis 2018 : volume, allures, cardio, compétitions, préparation de mon prochain objectif et carte de mes parcours, mis à jour chaque nuit.">
+<meta property="og:description" content="Mes perfs en course à pied depuis 2018 : volume, allures, cardio, compétitions, préparation de mon prochain objectif et carte de mes parcours, mis à jour chaque nuit.">
 <meta property="og:url" content="https://sillage.alexandrebarreau.fr/">
 <meta property="og:image" content="https://sillage.alexandrebarreau.fr/assets/og.png">
 <meta property="og:image:width" content="1200">
@@ -1108,8 +1108,8 @@
   <header class="sr-hero" id="hero">
     <div class="sr-hero__glow" aria-hidden="true"></div>
     <div class="sr-hero__bg" id="hero-bg" data-source="by_week" aria-hidden="true"></div>
-    <p class="sr-eyebrow">Course à pied · Strava · depuis <span data-source="totals" data-field="first_year" data-row="0" data-fmt="text">—</span></p>
-    <h1 class="sr-title">Mes courses Strava</h1>
+    <p class="sr-eyebrow">Course à pied · depuis <span data-source="totals" data-field="first_year" data-row="0" data-fmt="text">—</span></p>
+    <h1 class="sr-title">Mes perfs</h1>
     <p class="sr-lede" id="takeaway">
       <span class="sr-strong"><span data-source="totals" data-field="km" data-row="0" data-fmt="n0">—</span> km</span> en
       <span class="sr-strong"><span data-source="totals" data-field="runs" data-row="0" data-fmt="n0">—</span> sorties</span>.
@@ -1431,7 +1431,7 @@
         <div class="sr-card__head">
           <div>
             <h3 class="sr-card__title">Charge aiguë et chronique</h3>
-            <p class="sr-card__note">Charge des 7 derniers jours ÷ moyenne hebdomadaire des 28 derniers (efforts relatifs Strava, tous sports) · entre 0,8 et 1,3 : progression maîtrisée ; au-delà de 1,5 : hausse brutale</p>
+            <p class="sr-card__note">Charge des 7 derniers jours ÷ moyenne hebdomadaire des 28 derniers (effort relatif de chaque séance, tous sports) · entre 0,8 et 1,3 : progression maîtrisée ; au-delà de 1,5 : hausse brutale</p>
           </div>
           <div class="sr-legend" id="acwr-legend"></div>
         </div>
@@ -1516,7 +1516,7 @@
 
     <div class="sr-section" id="records-entrainement">
       <h2 class="sr-h2">Records à l’entraînement</h2>
-      <p class="sr-section__note">Meilleurs efforts Strava, courses comprises</p>
+      <p class="sr-section__note">Mes meilleurs temps sur chaque distance, courses comprises</p>
     </div>
     <div class="sr-grid">
       <article class="sr-card" id="card-efforts">
@@ -1691,7 +1691,7 @@
 
     <div class="sr-section" id="sec-elev">
       <h2 class="sr-h2">Dénivelé</h2>
-      <p class="sr-section__note">D+ mesuré par Strava sur chaque sortie</p>
+      <p class="sr-section__note">D+ mesuré sur chaque sortie</p>
     </div>
     <div class="sr-tiles dash-skeleton" id="elev-tiles" data-source="totals elev_by_year" style="min-height: 92px"></div>
     <div class="sr-grid">
@@ -1762,7 +1762,7 @@
       <div class="sr-card__head">
         <div>
           <h3 class="sr-card__title">Le temps passé dans chaque zone</h3>
-          <p class="sr-card__note">Part du temps de course dans chaque zone de fréquence cardiaque (bpm) de mon profil Strava, année par année · à droite, heures avec cardio et FC moyenne · années d’au moins 20 sorties avec cardio</p>
+          <p class="sr-card__note">Part du temps de course dans chaque zone de fréquence cardiaque (bpm), selon mes zones, année par année · à droite, heures avec cardio et FC moyenne · années d’au moins 20 sorties avec cardio</p>
         </div>
         <div class="sr-legend" id="zone-legend" data-source="hr_zones"></div>
       </div>
@@ -1773,7 +1773,7 @@
       <div class="sr-card__head">
         <div>
           <h3 class="sr-card__title">Forme, fatigue et fraîcheur</h3>
-          <p class="sr-card__note">Charge = effort relatif Strava de chaque jour, tous sports · forme = moyenne des 42 derniers jours, fatigue = des 7 derniers, fraîcheur = forme − fatigue</p>
+          <p class="sr-card__note">Charge = effort relatif de chaque jour, tous sports · forme = moyenne des 42 derniers jours, fatigue = des 7 derniers, fraîcheur = forme − fatigue</p>
         </div>
         <div class="sr-seg" role="group" aria-label="Période" id="load-range">
           <button type="button" data-v="183" aria-pressed="false">6 mois</button>
@@ -1818,7 +1818,7 @@
         <div class="sr-card__head">
           <div>
             <h3 class="sr-card__title">Charge par semaine</h3>
-            <p class="sr-card__note">Somme des efforts relatifs Strava, 26 dernières semaines</p>
+            <p class="sr-card__note">Somme des efforts relatifs, 26 dernières semaines</p>
           </div>
           <div class="sr-legend">
             <span class="sr-legend__item"><i class="sr-sw" style="background: var(--sr-blue)"></i>course</span>
@@ -1914,7 +1914,7 @@
   <section class="sr-page" id="competitions" role="tabpanel" aria-labelledby="tab-competitions" hidden>
     <div class="sr-section">
       <h2 class="sr-h2">Palmarès</h2>
-      <p class="sr-section__note">Chrono officiel quand il est noté sur Strava, sinon temps écoulé</p>
+      <p class="sr-section__note">Chrono officiel quand je l’ai noté, sinon temps écoulé</p>
     </div>
     <div class="sr-records-grid" id="records">
       <div class="sr-record">
@@ -2083,7 +2083,7 @@
       <div class="sr-card__head">
         <div>
           <h3 class="sr-card__title">Toutes les compétitions</h3>
-          <p class="sr-card__note">Distance officielle et allure réelle (chrono ÷ distance officielle) · classement tel que noté sur Strava · « RP » = record personnel au moment de la course</p>
+          <p class="sr-card__note">Distance officielle et allure réelle (chrono ÷ distance officielle) · classement tel que je l’ai noté · « RP » = record personnel au moment de la course</p>
         </div>
         <input class="sr-search" id="race-search" type="search" placeholder="Rechercher une course" aria-label="Rechercher une course">
       </div>
@@ -2163,7 +2163,7 @@
         <div class="sr-card__head">
           <div>
             <h3 class="sr-card__title">Où</h3>
-            <p class="sr-card__note">Sorties par pays et par ville (lieu Strava)</p>
+            <p class="sr-card__note">Sorties par pays et par ville de départ</p>
           </div>
         </div>
         <div class="sr-split">
@@ -2181,7 +2181,7 @@
         <div class="sr-card__head">
           <div>
             <h3 class="sr-card__title">À côté de la course</h3>
-            <p class="sr-card__note">Heures d’autres sports enregistrées sur Strava</p>
+            <p class="sr-card__note">Heures passées sur les autres sports</p>
           </div>
           <div class="sr-legend" id="cross-legend" data-source="cross"></div>
         </div>
@@ -2259,7 +2259,7 @@
     </article>
 
     <div class="sr-section" id="segments">
-      <h2 class="sr-h2">Segments Strava</h2>
+      <h2 class="sr-h2">Segments</h2>
       <p class="sr-section__note" id="seg-cov">Les portions où je passe le plus souvent</p>
     </div>
     <div class="sr-grid sr-grid--wide">
@@ -2307,10 +2307,10 @@
   </section>
 
   <p class="sr-footer">
-    Données Strava mises à jour chaque nuit · dernière synchro le <span data-source="meta" data-field="synced_at" data-row="0" data-fmt="synced">—</span>
+    Mis à jour chaque nuit · dernière mise à jour le <span data-source="meta" data-field="synced_at" data-row="0" data-fmt="synced">—</span>
     · première sortie le <span data-source="totals" data-field="first_date" data-row="0" data-fmt="dlong">—</span>
-    · compétitions repérées par Claude d’après les titres et descriptions Strava
-    · cardio : 40 points par sortie, zones de mon profil Strava
+    · compétitions repérées d’après le titre et la description de chaque sortie
+    · cardio : 40 points par sortie, selon mes zones
   </p>
 </div>
 </main>

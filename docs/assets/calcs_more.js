@@ -121,7 +121,7 @@ dash.calc('ramp_weeks', {
 
 dash.calc('acwr', {
   title: 'Charge aiguë et chronique',
-  description: 'Chaque jour des 6 derniers mois : charge des 7 derniers jours (somme des efforts relatifs Strava, tous sports) divisée par la charge hebdomadaire moyenne des 28 derniers jours. Entre 0,8 et 1,3 : progression maîtrisée ; au-delà de 1,5 : hausse brutale.',
+  description: 'Chaque jour des 6 derniers mois : charge des 7 derniers jours (somme des efforts relatifs, tous sports) divisée par la charge hebdomadaire moyenne des 28 derniers jours. Entre 0,8 et 1,3 : progression maîtrisée ; au-delà de 1,5 : hausse brutale.',
   inputs: ['load', 'race_results'],
   fn: (load, race_results) => {
     const races = new Map(race_results.map((r) => [r.date, r.event]));
@@ -317,7 +317,7 @@ dash.calc('loops', {
 
 dash.calc('seg_top', {
   title: 'Segments les plus courus',
-  description: 'Les segments Strava d’au moins 300 m sur lesquels je suis passé au moins 3 fois (un passage par sortie : le plus rapide), avec le temps, l’allure et la FC de chaque passage, le meilleur et le dernier.',
+  description: 'Les segments d’au moins 300 m sur lesquels je suis passé au moins 3 fois (un passage par sortie : le plus rapide), avec le temps, l’allure et la FC de chaque passage, le meilleur et le dernier.',
   inputs: ['seg_efforts', 'segments', 'runs', 'race_results'],
   fn: (seg_efforts, segments, runs, race_results) => {
     const def = new Map(segments.map((s) => [String(s.s), s]));

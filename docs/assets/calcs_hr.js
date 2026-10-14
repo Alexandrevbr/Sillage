@@ -2,7 +2,7 @@
 
 dash.calc('hr_runs', {
   title: 'Cardio par sortie',
-  description: 'Pour chaque sortie enregistrée avec un cardio : FC moyenne des points en mouvement (vitesse d’au moins 0,5 m/s, point de départ écarté), temps dans chaque zone Strava (part des points × temps en mouvement), mètres parcourus par battement (vitesse moyenne ÷ FC moyenne), dérive cardiaque (rapport vitesse/FC de la 2e moitié comparé à la 1re) et régularité de l’allure (écart-type ÷ moyenne de la vitesse). Les points dont la FC tombe sous 65 % de la médiane de la sortie (décrochage du capteur) sont écartés, ainsi que les sorties à la FC figée (moins de 5 valeurs différentes) ou avec moins de 20 points.',
+  description: 'Pour chaque sortie enregistrée avec un cardio : FC moyenne des points en mouvement (vitesse d’au moins 0,5 m/s, point de départ écarté), temps dans chaque zone (part des points × temps en mouvement), mètres parcourus par battement (vitesse moyenne ÷ FC moyenne), dérive cardiaque (rapport vitesse/FC de la 2e moitié comparé à la 1re) et régularité de l’allure (écart-type ÷ moyenne de la vitesse). Les points dont la FC tombe sous 65 % de la médiane de la sortie (décrochage du capteur) sont écartés, ainsi que les sorties à la FC figée (moins de 5 valeurs différentes) ou avec moins de 20 points.',
   inputs: ['runs', 'hr_streams', 'hr_zones'],
   fn: (runs, hr_streams, hr_zones) => {
     const zoneOf = (bpm) => hr_zones.find((z) => bpm >= z.min_bpm && (z.max_bpm == null || bpm <= z.max_bpm)).zone;
@@ -43,7 +43,7 @@ dash.calc('hr_runs', {
 
 dash.calc('zones_by_year', {
   title: 'Zones cardio par année',
-  description: 'Heures passées dans chaque zone de fréquence cardiaque Strava, par année, part du temps en endurance (zones 1 et 2) et en intensité haute (zones 4 et 5), FC moyenne pondérée par le temps.',
+  description: 'Heures passées dans chaque zone de fréquence cardiaque (mes zones), par année, part du temps en endurance (zones 1 et 2) et en intensité haute (zones 4 et 5), FC moyenne pondérée par le temps.',
   inputs: ['hr_runs'],
   fn: (hr_runs) => [...new Set(hr_runs.map((r) => r.year))].sort((a, b) => a - b).map((year) => {
     const rs = hr_runs.filter((r) => r.year === year);
@@ -61,7 +61,7 @@ dash.calc('zones_by_year', {
 
 dash.calc('zones_by_month', {
   title: 'Zones cardio par mois',
-  description: 'Heures passées dans chaque zone de fréquence cardiaque Strava, mois par mois, du premier mois avec cardio au dernier mois couru (zéro pour un mois sans sortie).',
+  description: 'Heures passées dans chaque zone de fréquence cardiaque (mes zones), mois par mois, du premier mois avec cardio au dernier mois couru (zéro pour un mois sans sortie).',
   inputs: ['hr_runs'],
   fn: (hr_runs) => {
     const months = hr_runs.map((r) => r.month).sort();
@@ -85,7 +85,7 @@ dash.calc('zones_by_month', {
 
 dash.calc('zones_by_band', {
   title: 'Zones cardio par distance',
-  description: 'Part du temps dans chaque zone de fréquence cardiaque Strava selon la tranche de distance de la sortie (moins de 5 km, 5–10, 10–15, 15–20, 20–25, 25 km et plus), avec la FC moyenne.',
+  description: 'Part du temps dans chaque zone de fréquence cardiaque (mes zones) selon la tranche de distance de la sortie (moins de 5 km, 5–10, 10–15, 15–20, 20–25, 25 km et plus), avec la FC moyenne.',
   inputs: ['hr_runs'],
   fn: (hr_runs) => {
     const bands = [['< 5 km', 0, 5], ['5–10 km', 5, 10], ['10–15 km', 10, 15], ['15–20 km', 15, 20], ['20–25 km', 20, 25], ['25 km et +', 25, Infinity]];
@@ -104,7 +104,7 @@ dash.calc('zones_by_band', {
 
 dash.calc('load', {
   title: 'Forme, fatigue et fraîcheur',
-  description: 'Charge du jour = somme des efforts relatifs Strava du jour (course et autres sports avec cardio). Forme = moyenne exponentielle de la charge sur 42 jours, fatigue = sur 7 jours, fraîcheur = forme − fatigue (modèle forme/fatigue classique, calcul maison).',
+  description: 'Charge du jour = somme des efforts relatifs du jour (course et autres sports avec cardio). Forme = moyenne exponentielle de la charge sur 42 jours, fatigue = sur 7 jours, fraîcheur = forme − fatigue (modèle forme/fatigue classique, calcul maison).',
   inputs: ['activities'],
   fn: (activities) => {
     const dayOf = (s) => {
@@ -155,7 +155,7 @@ dash.calc('load_now', {
 
 dash.calc('load_weeks', {
   title: 'Charge par semaine',
-  description: 'Somme des efforts relatifs Strava par semaine (lundi → dimanche) : course à pied et autres sports.',
+  description: 'Somme des efforts relatifs par semaine (lundi → dimanche) : course à pied et autres sports.',
   inputs: ['load'],
   fn: (load) => {
     const weeks = new Map();

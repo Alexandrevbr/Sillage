@@ -62,7 +62,7 @@
       });
   };
 
-  /* ---------- Tracés : polylignes encodées de Strava (précision 1e-5) ---------- */
+  /* ---------- Tracés : polylignes encodées (précision 1e-5) ---------- */
   const decode = (str) => {
     const pts = [];
     let i = 0;
