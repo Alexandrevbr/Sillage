@@ -1000,11 +1000,11 @@
     // Logo et nom, comme l’en-tête du site.
     ctx.save();
     ctx.beginPath();
-    ctx.roundRect(P, 92, 60, 60, 16);
+    ctx.roundRect(P, 86, 70, 70, 18);
     ctx.fillStyle = INK;
     ctx.fill();
-    ctx.translate(P, 92);
-    ctx.scale(60 / 64, 60 / 64);
+    ctx.translate(P, 86);
+    ctx.scale(70 / 64, 70 / 64);
     ctx.fillStyle = BLUE;
     [['M38 15L48 15L36 49L26 49Z', 1], ['M27.5 22L34 22L25.5 46L19 46Z', 0.72], ['M19 29L23.5 29L17.5 45L13 45Z', 0.45]].forEach(([d, a]) => {
       ctx.globalAlpha = a;
@@ -1012,13 +1012,17 @@
     });
     ctx.restore();
     ctx.fillStyle = INK;
-    ctx.font = font(800, 44, SANS);
-    ctx.letterSpacing = '-1.5px';
-    ctx.fillText('Sillage', P + 80, 124);
+    ctx.font = font(800, 58, SANS);
+    ctx.letterSpacing = '-2.5px';
+    ctx.fillText('Sillage', P + 92, 128);
+    const wordW = textW('Sillage');
+    // Signature dans la largeur de « Sillage », sans la dépasser.
     ctx.letterSpacing = '0px';
+    ctx.font = font(600, 20, SANS);
+    const sign = 'By Alexandre Barreau';
+    ctx.font = font(600, Math.min(20, (20 * (wordW - 4)) / textW(sign)), SANS);
     ctx.fillStyle = MUTED;
-    ctx.font = font(600, 18, SANS);
-    ctx.fillText('By Alexandre Barreau', P + 81, 158);
+    ctx.fillText(sign, P + 94, 160);
     // En-tête.
     ctx.fillStyle = MUTED;
     ctx.font = font(700, 26, SANS);

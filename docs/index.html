@@ -235,8 +235,10 @@
   .sr-brand { display: inline-flex; align-items: center; gap: 12px; color: var(--color-fg); text-decoration: none; }
   .sr-brand__mark { width: 46px; height: 46px; flex: none; border-radius: 13px; box-shadow: 0 8px 18px -8px rgb(50 82 223 / .6); }
   .sr-brand__word { display: grid; line-height: 1; }
-  .sr-brand__word b { font-weight: 800; font-size: 1.75rem; letter-spacing: -.045em; }
-  .sr-brand__word small { font-weight: 600; font-size: .6875rem; letter-spacing: .01em; color: var(--sr-brand); margin-top: 5px; padding-left: 1px; white-space: nowrap; }
+  .sr-brand__word { justify-items: start; }
+  .sr-brand__word b { font-weight: 800; font-size: 2rem; letter-spacing: -.045em; }
+  /* La signature ne dépasse pas « Sillage » : 9,5 px pour 32 px (mesuré : 96,7 px contre 97,9 px). */
+  .sr-brand__word small { font-weight: 600; font-size: .59375rem; letter-spacing: .005em; color: var(--sr-brand); margin-top: 4px; padding-left: 1px; white-space: nowrap; }
   .sr-sync {
     display: inline-flex;
     align-items: center;
