@@ -17,10 +17,14 @@ En ligne sur **https://sillage.alexandrebarreau.fr**.
   2. elle décide lesquelles sont des compétitions ;
   3. elle vérifie que tout le site se recalcule sans erreur ;
   4. elle pousse sur `main`.
+- En journée, de 7 h à 23 h, une seconde tâche regarde toutes les heures s’il y a une nouvelle
+  sortie et la publie aussitôt (« Vérification horaire » dans [SYNC.md](SYNC.md)). S’il n’y a rien
+  de nouveau, elle ne pousse rien.
 - Les tours, meilleurs efforts et segments de l’historique arrivent par lots : chaque nuit complète
   les nouvelles sorties plus 20 anciennes (les compétitions d’abord, puis des plus récentes aux plus
   anciennes).
-- Chaque nuit laisse une ligne dans [sync/journal.md](sync/journal.md), même en cas d’échec.
+- Chaque nuit laisse une ligne dans [sync/journal.md](sync/journal.md), même en cas d’échec. Une
+  vérification horaire n’en laisse une que si elle publie une nouvelle sortie.
 - Si une nuit échoue, aucune donnée n’est poussée, et la synchro suivante rattrape tout : elle
   relit toujours les 14 derniers jours.
 

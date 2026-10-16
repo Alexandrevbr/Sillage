@@ -3,6 +3,7 @@
     python3 scripts/harvest.py --plan          → fenêtre à relire (à passer à list_activities)
     python3 scripts/harvest.py                 → lit les réponses du connecteur, prépare .sync/
     python3 scripts/harvest.py --backlog 40    → idem, avec 40 anciennes sorties à compléter (tours, records, segments)
+    python3 scripts/harvest.py --quick [--plan] → vérification horaire : fenêtre courte, nouvelles sorties seulement
 
 Les réponses sont lues à deux endroits, fusionnés :
   1. le journal de la session Claude en cours (~/.claude/projects/**/*.jsonl récents) ;
@@ -24,13 +25,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import DATA, RESOLUTION, RUN_TYPES, STAGE, STATE, STREAMS, flat, hms, load, pace, perf_of, save  # noqa: E402
 
 WINDOW_DAYS = 14  # on relit les 14 derniers jours : titres, descriptions et kudos changent après coup
+QUICK_DAYS = 1  # vérification horaire : la veille de la dernière sortie connue suffit à voir les nouvelles
 BACKLOG = 20  # anciennes sorties complétées chaque nuit (tours, meilleurs efforts et segments ; réponses longues)
 
 
-def window_start():
+def window_start(quick=False):
     acts = load(DATA / 'activities.json', [])
     last = max((a['start_local'] for a in acts), default='2018-01-01T00:00:00')
-    d = dt.date.fromisoformat(last[:10]) - dt.timedelta(days=WINDOW_DAYS)
+    d = dt.date.fromisoformat(last[:10]) - dt.timedelta(days=QUICK_DAYS if quick else WINDOW_DAYS)
     return f'{d.isoformat()}T00:00:00'
 
 
@@ -157,11 +159,14 @@ def main():
     ap.add_argument('--plan', action='store_true', help='affiche la fenêtre à relire et s’arrête')
     ap.add_argument('--hours', type=float, default=12, help='âge maximal des journaux de session lus')
     ap.add_argument('--backlog', type=int, default=BACKLOG, help='anciennes sorties à compléter (tours, records, segments)')
+    ap.add_argument('--quick', action='store_true', help='vérification horaire : fenêtre courte, sans arriéré')
     args = ap.parse_args()
+    if args.quick:
+        args.backlog = 0
 
-    start = window_start()
+    start = window_start(args.quick)
     if args.plan:
-        print(f'Fenêtre à relire : depuis {start}')
+        print(f'{"Vérification horaire" if args.quick else "Fenêtre à relire"} : depuis {start}')
         print(f'→ list_activities(range_start="{start}", ordering="StartDateLocalAsc", first=100, include_polyline=true) ; '
               'paginer avec after=end_cursor tant que has_next_page')
         return
@@ -226,12 +231,17 @@ def main():
     new = [a for a in acts.values() if a['id'] not in known]
 
     print(f'Journaux lus : {len(transcripts(args.hours))} · appels Strava trouvés : {len(calls)}')
-    if not calls:
+    if not calls and not args.quick:
         print('! Aucune réponse Strava trouvée dans le journal de la session : copier chaque réponse du connecteur '
               'telle quelle dans .sync/raw/ (list_1.json, streams_<id>.json, zones.json), puis relancer ce script. Voir SYNC.md.')
     print(f'Activités vues : {len(acts)} (dont {len(in_window)} dans la fenêtre depuis {start[:10]}) · nouvelles : {len(new)}')
     for a in sorted(new, key=lambda x: x['start_local']):
         print(f"  + {a['start_local'][:16]} {a['sport_type']:<10} {(a['distance'] or 0) / 1000:5.1f} km  {a['name']}")
+    if args.quick and not new:
+        why = 'aucune nouvelle activité' if calls else 'aucune réponse Strava trouvée dans le journal de la session'
+        print(f'Vérification horaire : {why}. Rien à publier : s’arrêter ici, sans merge ni publish '
+              '(la synchro de la nuit relit les 14 derniers jours).')
+        return
     print(f'Flux cardio en attente : {len(staged)} · zones : {"oui" if zones else "non"}')
     if todo:
         print(f'À récupérer ({len(todo)}) : get_activity_streams(activity_id=…, streams={STREAMS}, resolution={RESOLUTION}) pour :')
