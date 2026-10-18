@@ -438,6 +438,132 @@ dash.calc('race_predict', {
   },
 });
 
+dash.calc('race_level', {
+  title: 'Niveau sur les 10 dernières courses',
+  description: 'Moyenne de l’indice VDOT de Jack Daniels sur mes 10 dernières courses sur route qui en ont un (10 km, 20 km, semi, marathon ; pas les relais, trails, Paris-Versailles ni Marseille-Cassis), écart-type, course la meilleure et la moins bonne de la série, moyenne des 10 courses d’avant pour mesurer la progression, meilleur VDOT jamais atteint, et chronos équivalents à ce niveau moyen sur 5 km, 10 km, semi et marathon. Les 10 courses sont jointes dans « races ».',
+  inputs: ['race_plus'],
+  fn: (race_plus) => {
+    const N = 10;
+    const vdot = (m, s) => {
+      const t = s / 60;
+      const v = m / t;
+      return (-4.6 + 0.182258 * v + 0.000104 * v * v) / (0.8 + 0.1894393 * Math.exp(-0.012778 * t) + 0.2989558 * Math.exp(-0.1932605 * t));
+    };
+    // Chrono qui donne ce VDOT sur cette distance (le VDOT baisse quand le chrono monte).
+    const solve = (target, m) => {
+      let lo = 60;
+      let hi = 8 * 3600;
+      for (let i = 0; i < 60; i++) {
+        const mid = (lo + hi) / 2;
+        if (vdot(m, mid) > target) lo = mid;
+        else hi = mid;
+      }
+      return (lo + hi) / 2;
+    };
+    const all = race_plus.filter((r) => r.vdot != null);
+    if (!all.length) return [];
+    const last = all.slice(-N);
+    const prev = all.slice(-2 * N, -N);
+    const mean = (a) => a.reduce((s, r) => s + r.vdot, 0) / a.length;
+    const avg = mean(last);
+    const prevAvg = prev.length ? mean(prev) : null;
+    const top = last.reduce((a, r) => (r.vdot > a.vdot ? r : a));
+    const low = last.reduce((a, r) => (r.vdot < a.vdot ? r : a));
+    const best = all.reduce((a, r) => (r.vdot > a.vdot ? r : a));
+    return [{
+      n: last.length, from_date: last[0].date, to_date: last[last.length - 1].date,
+      vdot_avg: avg, vdot_sd: Math.sqrt(last.reduce((s, r) => s + (r.vdot - avg) ** 2, 0) / last.length),
+      top_vdot: top.vdot, top_event: top.event, top_date: top.date,
+      low_vdot: low.vdot, low_event: low.event, low_date: low.date,
+      prev_n: prev.length, prev_avg: prevAvg, delta: prevAvg == null ? null : avg - prevAvg,
+      prev_from_date: prev.length ? prev[0].date : null,
+      best_vdot: best.vdot, best_event: best.event, best_date: best.date,
+      eq_5k_s: solve(avg, 5000), eq_10k_s: solve(avg, 10000), eq_semi_s: solve(avg, 21097.5), eq_marathon_s: solve(avg, 42195),
+      races: last.map((r) => ({ id: r.id, date: r.date, event: r.event, category: r.category, km: r.km, time_s: r.time_s, vdot: r.vdot, pr: r.pr })),
+    }];
+  },
+});
+
+dash.calc('race_last', {
+  title: 'Dernière compétition',
+  description: 'Ma compétition la plus récente, replacée parmi les autres : chrono et allure réelle ; indice VDOT (courses sur route) avec son rang parmi toutes les courses qui en ont un et parmi celles de l’année, meilleur VDOT des autres courses et écart à la moyenne des 10 dernières courses ; record de la catégorie hors cette course (l’ancien record si elle l’a battu), écart à ce record et rang dans la catégorie ; dernière édition précédente de la même épreuve ; allure et FC de chaque moitié (tours au km de la montre, courses sur route seulement) et écart médian entre les moitiés sur mes autres courses sur route ; compétition précédente et jours écoulés depuis ; km moyens par semaine sur les 6 semaines d’avant, comparés aux 6 semaines d’avant le record de la catégorie ; chronos équivalents à ce VDOT sur 5 km, 10 km, semi et marathon ; prochain objectif du calendrier, s’il vient après la course.',
+  inputs: ['race_results', 'race_plus', 'race_pacing', 'race_level', 'runs', 'goal_info'],
+  fn: (race_results, race_plus, race_pacing, race_level, runs, goal_info) => {
+    if (!race_results.length) return [];
+    const vdot = (m, s) => {
+      const t = s / 60;
+      const v = m / t;
+      return (-4.6 + 0.182258 * v + 0.000104 * v * v) / (0.8 + 0.1894393 * Math.exp(-0.012778 * t) + 0.2989558 * Math.exp(-0.1932605 * t));
+    };
+    const solve = (target, m) => {
+      let lo = 60;
+      let hi = 8 * 3600;
+      for (let i = 0; i < 60; i++) {
+        const mid = (lo + hi) / 2;
+        if (vdot(m, mid) > target) lo = mid;
+        else hi = mid;
+      }
+      return (lo + hi) / 2;
+    };
+    const median = (a) => {
+      const s = [...a].sort((x, y) => x - y);
+      if (!s.length) return null;
+      return s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2;
+    };
+    const RECORDS = ['10 km', 'Semi', '20 km', 'Marathon', 'Paris-Versailles', 'Trail'];
+    const r = race_results[race_results.length - 1];
+    const plus = race_plus.find((x) => x.id === r.id) || {};
+    const v = plus.vdot == null ? null : plus.vdot;
+    const withV = race_plus.filter((x) => x.vdot != null);
+    const others = withV.filter((x) => x.id !== r.id);
+    const bestOther = others.length ? others.reduce((a, x) => (x.vdot > a.vdot ? x : a)) : null;
+    const yearV = withV.filter((x) => x.year === r.year);
+    // Record de la catégorie hors cette course : l’ancien record si elle l’a battu, sinon le record actuel.
+    const same = race_results.filter((x) => x.category === r.category);
+    const rival = same.filter((x) => x.id !== r.id);
+    const rec = RECORDS.includes(r.category) && rival.length ? rival.reduce((a, x) => (x.time_s < a.time_s ? x : a)) : null;
+    const eds = race_results.filter((x) => x.event === r.event && x.id !== r.id && x.date < r.date);
+    const ed = eds.length ? eds[eds.length - 1] : null;
+    const i = race_results.indexOf(r);
+    const prev = i > 0 ? race_results[i - 1] : null;
+    const pace = race_pacing.find((x) => x.id === r.id);
+    const split = pace && pace.splits && ['10 km', '20 km', 'Semi', 'Marathon'].includes(r.category) ? pace : null;
+    // Gestion de course : seulement sur route plate, où l’écart entre les moitiés dit quelque chose de l’allure (pas de côte à Paris-Versailles).
+    const ROAD = ['10 km', '20 km', 'Semi', 'Marathon'];
+    const splitMed = median(race_pacing.filter((x) => x.splits && x.id !== r.id && x.split_pct != null && ROAD.includes(x.category)).map((x) => x.split_pct));
+    // Km par semaine sur les 6 semaines (42 jours) qui précèdent le jour de course.
+    const vol = (day) => runs.filter((x) => x.day >= day - 42 && x.day < day).reduce((s, x) => s + x.km, 0) / 6;
+    const lvl = race_level.length ? race_level[0] : null;
+    const g = goal_info.length && goal_info[0].date > r.date ? goal_info[0] : null;
+    return [{
+      id: r.id, date: r.date, year: r.year, event: r.event, category: r.category, km: r.km, gps_km: r.gps_km,
+      time_s: r.time_s, official: r.official, pace_s: r.pace_s, place: r.place, pr: r.pr, elev_m: r.elev_m,
+      hr_avg: plus.hr_avg == null ? null : plus.hr_avg,
+      vdot: v, vdot_n: withV.length,
+      vdot_rank: v == null ? null : withV.filter((x) => x.vdot > v).length + 1,
+      vdot_year_n: yearV.length, vdot_year_rank: v == null ? null : yearV.filter((x) => x.vdot > v).length + 1,
+      best_other_vdot: bestOther ? bestOther.vdot : null, best_other_event: bestOther ? bestOther.event : null,
+      best_other_date: bestOther ? bestOther.date : null,
+      level_avg: lvl ? lvl.vdot_avg : null, level_n: lvl ? lvl.n : null,
+      level_diff: lvl && v != null ? v - lvl.vdot_avg : null,
+      cat_n: same.length, cat_rank: same.filter((x) => x.time_s < r.time_s).length + 1,
+      rec_time_s: rec ? rec.time_s : null, rec_event: rec ? rec.event : null, rec_date: rec ? rec.date : null,
+      rec_gap_s: rec ? r.time_s - rec.time_s : null,
+      ed_n: eds.length, ed_time_s: ed ? ed.time_s : null, ed_date: ed ? ed.date : null, ed_gap_s: ed ? r.time_s - ed.time_s : null,
+      prev_event: prev ? prev.event : null, prev_date: prev ? prev.date : null, prev_category: prev ? prev.category : null,
+      prev_pr: prev ? prev.pr : null, prev_days: prev ? r.day - prev.day : null,
+      half1_pace: split ? split.half1_pace : null, half2_pace: split ? split.half2_pace : null,
+      split_pct: split ? split.split_pct : null, split_median: splitMed,
+      hr1: split ? split.hr1 : null, hr2: split ? split.hr2 : null,
+      vol_km_week: vol(r.day), ref_vol_km_week: rec ? vol(rec.day) : null,
+      eq_5k_s: v == null ? null : solve(v, 5000), eq_10k_s: v == null ? null : solve(v, 10000),
+      eq_semi_s: v == null ? null : solve(v, 21097.5), eq_marathon_s: v == null ? null : solve(v, 42195),
+      goal_event: g ? g.event : null, goal_date: g ? g.date : null, goal_category: g ? g.category : null,
+      goal_km: g ? g.km : null, goal_target_s: g ? g.target_s : null, goal_target_pace_s: g ? g.target_pace_s : null,
+    }];
+  },
+});
+
 dash.calc('elev_by_year', {
   title: 'Dénivelé par année',
   description: 'Par année : dénivelé positif total, mètres de D+ par km et par sortie, sorties vallonnées (au moins 10 m de D+ par km) et sortie au plus fort dénivelé.',

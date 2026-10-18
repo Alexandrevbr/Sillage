@@ -16,7 +16,7 @@
   };
   const entered = new Set();
   const enter = (el) => {
-    const card = el && el.closest('.sr-card, .sr-tiles, .sr-lead');
+    const card = el && el.closest('.sr-card, .sr-tiles, .sr-lead, .sr-goal');
     if (!card || entered.has(card)) return;
     entered.add(card);
     card.style.animationDelay = `${(entered.size % 6) * 40}ms`;
@@ -72,8 +72,8 @@
         .text(t.getUTCMonth() === 0 ? String(t.getUTCFullYear()) : SR.mon(t));
     });
   };
-  const tile = (label, value, unit, sub) => {
-    const t = SR.el('div', 'sr-tile');
+  const tile = (label, value, unit, sub, cls) => {
+    const t = SR.el('div', `sr-tile${cls ? ` ${cls}` : ''}`);
     const v = SR.el('p', 'sr-tile__value');
     v.append(value);
     if (unit) v.append(SR.el('span', 'sr-unit', unit));
@@ -1186,6 +1186,335 @@
     enter(table);
   }
 
+  /* ================= Mon niveau actuel : dernière course et moyenne des 10 dernières ================= */
+  const CAT_WORD = { '10 km': '10 km', Semi: 'semi', '20 km': '20 km', Marathon: 'marathon', 'Paris-Versailles': 'Paris-Versailles', Trail: 'trail' };
+  const onCat = (c) => (c === 'Trail' ? 'en trail' : `sur ${CAT_WORD[c] || c}`);
+  const FIRST = {
+    '10 km': 'Mon premier 10 km', Semi: 'Mon premier semi', '20 km': 'Mon premier 20 km', Marathon: 'Mon premier marathon',
+    'Paris-Versailles': 'Mon premier Paris-Versailles', Trail: 'Mon premier trail',
+  };
+  // Nom d’épreuve dans une phrase : « le 20 km de Paris », « les Championnats… », « l’Ekiden… », « Paris-Versailles ».
+  const theEvent = (ev) => {
+    if (/^(Championnats|Foulées)\b/.test(ev)) return `les ${ev}`;
+    if (/^[A-ZÀ-Ý][a-zà-ÿ]+-[A-ZÀ-Ý]/.test(ev)) return ev;
+    if (/^[aeiouyàâéèêëîïôûAEIOUYÀÂÉÈÊËÎÏÔÛ]/.test(ev)) return `l’${ev}`;
+    return `le ${ev}`;
+  };
+  const after = (days) => ({ 1: 'un jour après', 7: 'une semaine après', 14: 'deux semaines après', 21: 'trois semaines après' }[days]
+    || `${days} jours après`);
+  const gapTime = (s) => {
+    const a = Math.abs(Math.round(s));
+    return a < 60 ? `${a}\u00a0s` : SR.dur(a);
+  };
+  const sgn1 = (v) => `${v >= 0 ? '+' : '−'}${SR.n1(Math.abs(v))}`;
+  const sgnPct = (v) => `${v >= 0 ? '+' : '−'}${SR.n1(Math.abs(v) * 100)}\u00a0%`;
+  const yearOf = (iso) => String(iso).slice(0, 4);
+  const cap1 = (str) => str.charAt(0).toUpperCase() + str.slice(1);
+  const catLine = (r) => (r.category === 'Semi' ? `Semi-marathon · ${SR.n1(r.km)} km`
+    : ['10 km', '20 km'].includes(r.category) ? r.category : `${r.category} · ${SR.n1(r.km)} km`);
+
+  function drawLastRace() {
+    const box = $('#last-race');
+    const tilesBox = $('#last-tiles');
+    const d = SR.ready(box, ['race_last', 'race_best']);
+    if (!d) return;
+    SR.ready(tilesBox, ['race_last']);
+    const [rows, best] = d;
+    if (!rows.length) {
+      box.hidden = true;
+      tilesBox.hidden = true;
+      return;
+    }
+    const [r] = rows;
+    const S = 'race_last';
+    const m = (text, field) => mk(text, S, field, null, 0);
+    box.replaceChildren();
+
+    // En-tête : l’épreuve à gauche, le chrono à droite.
+    const head = SR.el('div', 'sr-goal__head');
+    const title = SR.el('div', 'sr-goal__title');
+    const h = SR.el('h3', 'sr-goal__event');
+    h.append(m(r.event, 'event'));
+    const line = SR.el('p', 'sr-last__line');
+    line.append(SR.el('b', null, catLine(r)));
+    if (r.place) line.append(txt(' · '), SR.el('b', null, r.place));
+    if (r.hr_avg != null) line.append(txt(' · FC moyenne '), SR.el('b', null, `${SR.n0(r.hr_avg)}\u00a0bpm`));
+    title.append(SR.el('p', 'sr-eyebrow', `Dernière course · ${SR.dmed(r.date)}`), h, line);
+    const count = SR.el('div', 'sr-goal__count');
+    const big = SR.el('span', 'sr-goal__j sr-last__time');
+    big.append(m(SR.dur(r.time_s), 'time_s'));
+    count.append(big, SR.el('span', 'sr-goal__date', `${SR.pace(r.pace_s)}/km · ${r.official ? 'chrono officiel' : 'temps écoulé'}`));
+    head.append(title, count);
+    box.append(head);
+
+    // Ce que dit la course : niveau, record, gestion.
+    const v = [];
+    if (r.vdot != null) {
+      v.push(txt('Avec un VDOT de '), hl(m(SR.n1(r.vdot), 'vdot')), txt(', '));
+      if (r.vdot_n === 1) {
+        v.push(txt('c’est ma première course sur route'));
+      } else if (r.vdot_rank === 1) {
+        v.push(txt('c’est '), hl(m('ma meilleure course sur route', 'vdot_rank')));
+        v.push(txt(`, ${SR.n1(r.vdot - r.best_other_vdot)} au-dessus de mon ancien meilleur niveau (`), m(SR.n1(r.best_other_vdot), 'best_other_vdot'),
+          txt(`, ${r.best_other_event} ${yearOf(r.best_other_date)})`));
+      } else {
+        v.push(txt('c’est ma '), hl(m(`${r.vdot_rank}e meilleure course`, 'vdot_rank')), txt(` sur route (sur ${SR.n0(r.vdot_n)}) : à `),
+          m(SR.n1(r.best_other_vdot - r.vdot), 'best_other_vdot'), txt(` de mon meilleur niveau (${SR.n1(r.best_other_vdot)})`));
+      }
+      if (r.level_diff != null && r.level_n >= 5) {
+        const avg = ` ma moyenne des ${SR.n0(r.level_n)} dernières courses (${SR.n1(r.level_avg)})`;
+        if (Math.abs(r.level_diff) < 0.25) v.push(txt(` et dans${avg}`));
+        else v.push(txt(' et '), hl(m(SR.n1(Math.abs(r.level_diff)), 'level_diff')), txt(` ${r.level_diff > 0 ? 'au-dessus de' : 'en dessous de'}${avg}`));
+      }
+      // Sur marathon, l’indice sort presque toujours plus bas que sur 10 km ou semi : la fatigue de fin de course n’est pas dans la formule.
+      v.push(txt('. '));
+      if (r.category === 'Marathon' && r.vdot_rank > 1) v.push(txt('Comme souvent, le marathon donne un indice plus bas que mes courses plus courtes. '));
+    } else {
+      v.push(txt({
+        'Paris-Versailles': 'Paris-Versailles est trop vallonné pour l’indice VDOT : il ne compte pas dans mon niveau sur route. ',
+        Trail: 'Pas d’indice VDOT en trail : avec le dénivelé, les chronos ne se comparent pas à la route. ',
+        Relais: 'Pas d’indice VDOT pour un relais : il ne compte pas dans mon niveau sur route. ',
+      }[r.category] || 'Pas d’indice VDOT sur ce parcours atypique : il ne compte pas dans mon niveau sur route. '));
+    }
+    const rec = [];
+    if (r.rec_time_s != null) {
+      const ref = `${SR.dur(r.rec_time_s)}, ${r.rec_event} ${yearOf(r.rec_date)}`;
+      if (r.pr) rec.push(hl(m(`Record personnel ${onCat(r.category)}`, 'pr')), txt(` : ${gapTime(r.rec_gap_s)} de mieux que l’ancien (${ref})`));
+      else rec.push(txt('À '), hl(m(gapTime(r.rec_gap_s), 'rec_gap_s')), txt(` de mon record ${onCat(r.category)} (${ref})`));
+    } else if (FIRST[r.category]) {
+      rec.push(txt(FIRST[r.category]));
+    }
+    if (r.ed_time_s != null && r.ed_date !== r.rec_date) {
+      const e = `${gapTime(r.ed_gap_s)} ${r.ed_gap_s <= 0 ? 'plus vite' : 'plus lent'} qu’en ${yearOf(r.ed_date)} (${SR.dur(r.ed_time_s)})`;
+      rec.push(txt(rec.length ? `, ${e}` : cap1(e)));
+    }
+    if (r.prev_days != null && r.prev_days >= 1 && r.prev_days <= 21) {
+      const prev = r.prev_pr && CAT_WORD[r.prev_category] ? `mon record ${onCat(r.prev_category)}` : theEvent(r.prev_event);
+      rec.push(txt(rec.length ? `, ${after(r.prev_days)} ${prev}` : cap1(`${after(r.prev_days)} ${prev}`)));
+    }
+    if (rec.length) v.push(...rec, txt('. '));
+    if (r.split_pct != null) {
+      const sp = r.split_pct;
+      const usual = r.split_median != null ? `d’habitude ${sgnPct(r.split_median)}` : '';
+      const heart = r.hr1 && r.hr2 && r.hr2 - r.hr1 >= 4 ? `, le cœur passant de ${SR.n0(r.hr1)} à ${SR.n0(r.hr2)}\u00a0bpm` : '';
+      if (sp <= -0.005) v.push(txt('Négative split : 2e moitié '), hl(m(`${SR.n1(-sp * 100)}\u00a0%`, 'split_pct')), txt(' plus rapide que la 1re.'));
+      else if (sp < 0.015) v.push(txt('Allure régulière : 2e moitié à '), m(sgnPct(sp), 'split_pct'), txt(` de la 1re${usual ? ` (${usual})` : ''}.`));
+      else {
+        v.push(txt(`J’ai ${sp >= 0.035 ? 'nettement' : 'un peu'} ralenti en 2e moitié (`), hl(m(sgnPct(sp), 'split_pct')),
+          txt(`${usual ? `, ${usual}` : ''})${heart}.`));
+      }
+    }
+    const verdict = SR.el('p', 'sr-last__verdict');
+    verdict.append(...v);
+    box.append(verdict);
+
+    // Prochain objectif du calendrier, s’il vient après cette course.
+    if (r.goal_event) {
+      const g = SR.el('p', 'sr-last__goal');
+      g.append(txt('Prochain objectif : '), SR.el('b', null, r.goal_event), txt(` le ${SR.dshort(r.goal_date)}`));
+      if (r.goal_target_s) {
+        g.append(txt(' en '), SR.el('b', null, SR.dur(r.goal_target_s)));
+        const eq = { '10 km': r.eq_10k_s, Semi: r.eq_semi_s, Marathon: r.eq_marathon_s }[r.goal_category];
+        if (r.goal_category === r.category && r.goal_target_pace_s) {
+          const dp = Math.round(r.pace_s - r.goal_target_pace_s);
+          g.append(txt(dp > 0 ? `, soit ${dp}\u00a0s/km plus vite que cette course` : dp < 0 ? `, soit ${-dp}\u00a0s/km de marge sur cette course` : ', à l’allure de cette course'));
+        } else if (eq) {
+          g.append(txt(` ; cette course vaut ${SR.dur(eq)} ${onCat(r.goal_category)}`));
+        }
+      }
+      g.append(txt('.'));
+      box.append(g);
+    }
+
+    // Équivalences de cette course et lien vers le détail km par km.
+    const foot = SR.el('div', 'sr-last__foot');
+    if (r.vdot != null) {
+      const wrap = SR.el('div', 'sr-last__eqwrap');
+      const dl = SR.el('dl', 'sr-last__eq');
+      [['5 km', 'eq_5k_s', null], ['10 km', 'eq_10k_s', '10 km'], ['Semi', 'eq_semi_s', 'Semi'], ['Marathon', 'eq_marathon_s', 'Marathon']]
+        .filter(([, , c]) => c !== r.category)
+        .forEach(([label, field, c]) => {
+          const item = SR.el('div');
+          const rb = c ? best.find((x) => x.category === c) : null;
+          const dd = SR.el('dd');
+          dd.append(m(SR.dur(r[field]), field));
+          item.append(SR.el('dt', null, label), dd);
+          if (rb) item.append(SR.el('dd', null, `record ${SR.dur(rb.time_s)}`));
+          dl.append(item);
+        });
+      dl.dataset.n = String(dl.children.length);
+      wrap.append(SR.el('p', 'sr-last__eqtitle', 'Ce que vaut cette course sur d’autres distances'), dl);
+      foot.append(wrap);
+    }
+    if (r.split_pct != null) {
+      const btn = SR.el('button', 'sr-last__more', 'Détail km par km ↓');
+      btn.type = 'button';
+      btn.addEventListener('click', () => {
+        const pick = $('#racekm-pick');
+        if (pick && [...pick.options].some((o) => o.value === r.id) && pick.value !== r.id) {
+          pick.value = r.id;
+          pick.dispatchEvent(new Event('change'));
+        }
+        const card = $('#card-racekm');
+        if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      foot.append(btn);
+    }
+    if (foot.children.length) box.append(foot);
+    enter(box);
+
+    // Tuiles : niveau, record, gestion de course, préparation.
+    const T = [];
+    if (r.vdot != null) {
+      T.push(tile('Indice VDOT', m(SR.n1(r.vdot), 'vdot'), null,
+        [txt(r.vdot_rank === 1 ? 'mon meilleur' : `${r.vdot_rank}e sur ${SR.n0(r.vdot_n)}`),
+          txt(`\u00a0· ${r.vdot_year_rank === 1 ? `meilleur de ${r.year}` : `${r.vdot_year_rank}e en ${r.year}`}`)],
+        r.vdot_rank === 1 ? 'sr-tile--good' : ''));
+    }
+    if (r.rec_time_s != null) {
+      T.push(r.pr
+        ? tile('Record battu', m(`−${gapTime(r.rec_gap_s)}`, 'rec_gap_s'), null, [txt(`ancien : ${SR.dur(r.rec_time_s)}\u00a0· ${r.rec_event} ${yearOf(r.rec_date)}`)], 'sr-tile--good')
+        : tile('Écart au record', m(`+${gapTime(r.rec_gap_s)}`, 'rec_gap_s'), null, [txt(`${SR.dur(r.rec_time_s)}\u00a0· ${r.rec_event} ${yearOf(r.rec_date)}`)]));
+    } else if (r.ed_time_s != null) {
+      T.push(tile('Édition précédente', m(`${r.ed_gap_s <= 0 ? '−' : '+'}${gapTime(r.ed_gap_s)}`, 'ed_gap_s'), null,
+        [txt(`${SR.dur(r.ed_time_s)} en ${yearOf(r.ed_date)}`)], r.ed_gap_s < 0 ? 'sr-tile--good' : ''));
+    }
+    if (r.split_pct != null) {
+      T.push(tile('2e moitié', m(sgnPct(r.split_pct), 'split_pct'), null,
+        [txt(`${SR.pace(r.half1_pace)} → ${SR.pace(r.half2_pace)}/km`), ...(r.split_median != null ? [txt(`\u00a0· d’habitude ${sgnPct(r.split_median)}`)] : [])],
+        r.split_pct <= -0.005 ? 'sr-tile--good' : r.split_pct >= 0.035 ? 'sr-tile--warn' : ''));
+    }
+    // Hors route plate (Paris-Versailles, trail, parcours atypique), le dénivelé explique une bonne part du chrono.
+    if (!['10 km', '20 km', 'Semi', 'Marathon'].includes(r.category) && r.elev_m > 0) {
+      T.push(tile('Dénivelé', m(SR.n0(r.elev_m), 'elev_m'), 'm D+', [txt(`${SR.n1(r.elev_m / r.km)} m par km`)]));
+    }
+    T.push(tile('Préparation', m(SR.n0(r.vol_km_week), 'vol_km_week'), 'km/sem',
+      [txt('6 semaines avant'), ...(r.ref_vol_km_week != null
+        ? [txt(`\u00a0· ${SR.n0(r.ref_vol_km_week)} avant ${r.pr ? 'l’ancien record' : 'mon record'}`)] : [])]));
+    tilesBox.replaceChildren(...T);
+    enter(tilesBox);
+  }
+
+  function drawLevel() {
+    const box = $('#c-level');
+    const top = $('#level-head');
+    const sum = $('#level-sum');
+    const d = SR.ready(box, ['race_level', 'race_best']);
+    if (!d) return;
+    SR.ready(top, ['race_level']);
+    SR.ready(sum, ['race_level']);
+    if (!d[0].length) {
+      $('#card-level').hidden = true;
+      return;
+    }
+    const [[L], best] = d;
+    const S = 'race_level';
+    const m = (text, field) => mk(text, S, field, null, 0);
+    const sameYear = yearOf(L.from_date) === yearOf(L.to_date);
+    $('#level-note').textContent = `Indice VDOT de mes ${L.n} dernières courses sur route (10 km, 20 km, semi, marathon), `
+      + `du ${sameYear ? SR.dshort(L.from_date) : SR.dmed(L.from_date)} au ${SR.dmed(L.to_date)}`;
+
+    // Résumé : moyenne, progression, équivalences, meilleure et moins bonne.
+    const big = SR.el('div', 'sr-level__big');
+    const val = SR.el('span', 'sr-level__value');
+    val.append(m(SR.n1(L.vdot_avg), 'vdot_avg'));
+    big.append(val);
+    if (L.delta != null) {
+      const badge = SR.el('span', 'sr-badge');
+      badge.append(m(sgn1(L.delta), 'delta'), txt(` par rapport aux ${SR.n0(L.prev_n)} d’avant`));
+      big.append(badge);
+    }
+    top.replaceChildren(SR.el('p', 'sr-level__label', 'VDOT moyen'), big);
+    const table = SR.el('table', 'sr-table sr-table--tight');
+    const thead = SR.el('thead');
+    const hr = SR.el('tr');
+    hr.append(SR.el('th', 'sr-l', 'À ce niveau'), SR.el('th', null, 'Équivalent'), SR.el('th', null, 'Record'));
+    thead.append(hr);
+    const tbody = SR.el('tbody');
+    [['10 km', 'eq_10k_s', '10 km'], ['Semi', 'eq_semi_s', 'Semi'], ['Marathon', 'eq_marathon_s', 'Marathon']].forEach(([label, field, c]) => {
+      const rb = best.find((x) => x.category === c);
+      const tr = SR.el('tr');
+      const td = SR.el('td');
+      td.append(m(SR.dur(L[field]), field));
+      tr.append(SR.el('td', 'sr-l sr-key', label), td, SR.el('td', 'sr-muted', rb ? SR.dur(rb.time_s) : '—'));
+      tbody.append(tr);
+    });
+    table.append(thead, tbody);
+    const tw = SR.el('div', 'sr-tablewrap');
+    tw.append(table);
+    const stats = SR.el('p', 'sr-stats');
+    const seg = (label, value, rest) => {
+      const s = SR.el('span');
+      s.append(txt(`${label} `), value, txt(rest ? ` ${rest}` : ''));
+      return s;
+    };
+    stats.append(
+      seg('Meilleure', SR.el('b', null, SR.n1(L.top_vdot)), `· ${L.top_event}`),
+      seg('Moins bonne', SR.el('b', null, SR.n1(L.low_vdot)), `· ${L.low_event}`),
+      seg('Écart-type', SR.el('b', null, `±${SR.n1(L.vdot_sd)}`)),
+    );
+    sum.replaceChildren(tw, stats);
+
+    // Graphique : une pastille par course, la moyenne et celle des courses d’avant.
+    const rows = L.races.map((r, i) => ({ ...r, i }));
+    const colors = CAT_COLORS();
+    const cats = ['10 km', 'Semi', '20 km', 'Marathon'].filter((c) => rows.some((r) => r.category === c));
+    $('#level-legend').replaceChildren(...cats.map((c) => legendItem(colors[c], c, 'dot')), legendItem('var(--color-fg)', 'moyenne', 'line'),
+      ...(L.prev_avg != null ? [legendItem(SR.col.ref, `les ${SR.n0(L.prev_n)} d’avant`, 'dash')] : []));
+    const W = SR.width(box);
+    const H = W >= 560 ? 300 : 220;
+    box.style.setProperty('--h', `${H}px`);
+    const mg = { t: 26, r: 78, b: 30, l: 34 };
+    box.replaceChildren();
+    const svg = SR.svg(box, W, H).attr('aria-label', `Indice VDOT de mes ${L.n} dernières courses sur route et leur moyenne`);
+    const tip = SR.tip(box);
+    const x = d3.scalePoint(rows.map((r) => r.i), [mg.l, W - mg.r]).padding(0.5);
+    const vals = [...rows.map((r) => r.vdot), L.vdot_avg, ...(L.prev_avg != null ? [L.prev_avg] : [])];
+    const y = d3.scaleLinear([Math.floor(d3.min(vals) - 0.3), Math.ceil(d3.max(vals) + 0.3)], [H - mg.b, mg.t]).nice();
+    const ticks = y.ticks(4).filter((t) => Number.isInteger(t));
+    SR.gridY(svg, y, mg.l, W - mg.r, ticks, SR.n0, { noBase: true });
+    const lines = [{ v: L.vdot_avg, label: 'moyenne', color: 'var(--color-fg)', dash: null, w: 2 }];
+    if (L.prev_avg != null) lines.push({ v: L.prev_avg, label: `les ${SR.n0(L.prev_n)} d’avant`, color: SR.col.ref, dash: '5 4', w: 1.5 });
+    lines.forEach((l) => {
+      svg.append('line').attr('x1', mg.l).attr('x2', W - mg.r + 6).attr('y1', y(l.v)).attr('y2', y(l.v))
+        .style('stroke', l.color).attr('stroke-width', l.w).attr('stroke-dasharray', l.dash);
+    });
+    // Libellés à droite, écartés s’ils se touchent.
+    const labs = SR.spread(lines.map((l) => ({ ...l, py: y(l.v) })), 'py', 30, mg.t, H - mg.b);
+    labs.forEach((l) => {
+      const g = svg.append('g').attr('transform', `translate(${W - mg.r + 12},${l.py})`);
+      g.append('text').attr('y', -2).style('font-size', 'var(--cds-font-size-body)').style('font-weight', 800)
+        .style('fill', 'var(--color-fg)').style('font-variant-numeric', 'tabular-nums').text(SR.n1(l.v));
+      SR.cap(g.append('text').attr('y', 12)).text(l.label);
+    });
+    const lastI = rows.length - 1;
+    svg.append('circle').attr('cx', x(lastI)).attr('cy', y(rows[lastI].vdot)).attr('r', 10.5)
+      .style('fill', 'none').style('stroke', 'var(--color-fg)').attr('stroke-width', 1.5);
+    halo(svg.append('text').attr('x', x(lastI)).attr('y', y(rows[lastI].vdot) - 16).attr('text-anchor', 'middle')
+      .style('font-size', 'var(--cds-font-size-caption)').style('font-weight', 'var(--cds-font-weight-medium)')
+      .style('fill', 'var(--color-fg)')).text('dernière');
+    svg.append('g').selectAll('circle').data(rows).join('circle')
+      .attr('cx', (r) => x(r.i)).attr('cy', (r) => y(r.vdot)).attr('r', 6)
+      .style('fill', (r) => colors[r.category] || SR.col.muted).style('stroke', SR.col.panel).attr('stroke-width', 2);
+    const fmtD = (iso) => (sameYear ? SR.dshort(iso) : SR.dmed(iso));
+    SR.cap(svg.append('text').attr('x', x(0)).attr('y', H - mg.b + 18).attr('text-anchor', 'middle')).text(fmtD(rows[0].date));
+    SR.cap(svg.append('text').attr('x', x(lastI)).attr('y', H - mg.b + 18).attr('text-anchor', 'middle')).text(SR.dshort(rows[lastI].date));
+    const hits = svg.append('g').selectAll('circle').data(rows).join('circle')
+      .attr('cx', (r) => x(r.i)).attr('cy', (r) => y(r.vdot)).attr('r', 15)
+      .style('fill', 'transparent').style('cursor', 'pointer');
+    SR.hover(hits, box, tip, (r) => ({
+      head: SR.dmed(r.date),
+      title: r.event,
+      rows: [
+        { color: colors[r.category] || SR.col.muted, label: 'VDOT', value: SR.n1(r.vdot) },
+        { label: 'Chrono', value: SR.dur(r.time_s) },
+        { label: 'Écart à la moyenne', value: sgn1(r.vdot - L.vdot_avg) },
+        ...(r.pr ? [{ label: 'Record personnel', value: 'oui' }] : []),
+      ],
+    }));
+    enter(box);
+  }
+
   /* ================= Courses par an et par distance ================= */
   const plural = (n, one, many) => (n > 1 ? many : one);
 
@@ -1319,7 +1648,7 @@
     distances: [drawElevTiles, drawElevYears, drawTerrain, drawElevTop],
     cardio: [drawCardioLead, drawCardioTiles, drawZoneYears, drawLoad, drawZoneMonths, drawZoneBands, drawLoadWeeks],
     croise: [drawCroiseLead, drawHrPace, drawHrScatter, drawEff, drawEffYears, drawDrift, drawDriftYears, drawGrade, drawCadPace],
-    competitions: [drawRaceTiles, drawRaceYears, drawRaceCats, drawVdot, drawPredict],
+    competitions: [drawLastRace, drawLevel, drawRaceTiles, drawRaceYears, drawRaceCats, drawVdot, drawPredict],
   };
   seg('load-range', 'loadRange', drawLoad);
   seg('zonemonths-by', 'zoneMonthsBy', drawZoneMonths);

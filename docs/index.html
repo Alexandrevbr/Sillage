@@ -474,6 +474,7 @@
   .sr-sw--line { width: 16px; height: 3px; border-radius: 2px; }
   .sr-sw--dot { border-radius: 50%; }
   .sr-sw--ring { border-radius: 50%; background: transparent; box-shadow: inset 0 0 0 1.5px var(--color-fg); }
+  .sr-sw--dash { width: 16px; height: 3px; border-radius: 0; -webkit-mask: repeating-linear-gradient(90deg, #000 0 5px, transparent 5px 8px); mask: repeating-linear-gradient(90deg, #000 0 5px, transparent 5px 8px); }
   .sr-sw--diamond { width: 8px; height: 8px; border-radius: 1px; transform: rotate(45deg); background: var(--color-fg); }
   .sr-scale { display: inline-flex; gap: 2px; }
   .sr-scale .sr-sw { width: 14px; height: 10px; border-radius: 2px; }
@@ -808,6 +809,84 @@
   .sr-goal__scale { position: relative; }
   .sr-goal__scale text { font-family: var(--font-sans); }
 
+  /* ---------- Dernière course et niveau actuel (Compétitions) ---------- */
+  .sr-last { min-height: 0; }
+  .sr-last__line { font-size: var(--cds-font-size-body); color: var(--color-fg-muted); }
+  .sr-last__line b { color: var(--color-fg); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .sr-last__time { white-space: nowrap; }
+  .sr-last__verdict {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(1.0625rem, 2.1cqi, 1.3125rem);
+    letter-spacing: -.015em;
+    line-height: 1.5;
+    max-width: 64ch;
+    text-wrap: pretty;
+  }
+  .sr-last__verdict .sr-hl { color: var(--sr-brand); font-weight: 800; white-space: nowrap; }
+  .sr-last__goal { font-size: var(--cds-font-size-body); color: var(--color-fg-muted); margin-top: -4px; }
+  .sr-last__goal b { color: var(--color-fg); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .sr-last__foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 14px 28px;
+    padding-top: clamp(14px, 2.2cqi, 20px);
+    border-top: 1px solid var(--sr-line);
+  }
+  .sr-last__eqwrap { display: grid; gap: 8px; flex: 1 1 24rem; min-width: 0; max-width: 46rem; }
+  .sr-last__eqtitle { font-size: var(--cds-font-size-caption); font-weight: 600; color: var(--color-fg-muted); }
+  .sr-last__eq { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 14px; margin: 0; align-items: start; }
+  .sr-last__eq[data-n="4"] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  @container sr (max-width: 560px) { .sr-last__eq[data-n="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .sr-last__eq div { display: grid; gap: 1px; min-width: 0; }
+  .sr-last__eq dt { font-size: var(--cds-font-size-caption); font-weight: 600; color: var(--sr-brand); }
+  .sr-last__eq dd { margin: 0; font-weight: 800; font-size: 1.125rem; letter-spacing: -.02em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .sr-last__eq dd + dd { font-weight: 500; font-size: var(--cds-font-size-caption); letter-spacing: 0; color: var(--color-fg-muted); }
+  .sr-last__more {
+    all: unset;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 16px;
+    border-radius: 999px;
+    background: var(--sr-tint);
+    color: var(--sr-brand);
+    font-size: var(--cds-font-size-body);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .sr-last__more:hover { background: color-mix(in srgb, var(--sr-brand) 16%, var(--sr-tint)); }
+  .sr-last__more:focus-visible { outline: 2px solid var(--sr-brand); outline-offset: 2px; }
+  /* Sur téléphone : le chiffre, le graphique, puis le détail ; sur grand écran, le graphique à droite. */
+  .sr-level {
+    display: grid;
+    gap: var(--cds-gap-md) clamp(20px, 3.4cqi, 40px);
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "head" "chart" "sum";
+  }
+  @container sr (min-width: 860px) {
+    .sr-level { grid-template-columns: minmax(17rem, .85fr) minmax(0, 1.6fr); grid-template-areas: "head chart" "sum chart"; align-items: start; }
+  }
+  .sr-level__head { grid-area: head; min-height: 64px; }
+  .sr-level__chart { grid-area: chart; }
+  .sr-level__sum { grid-area: sum; display: grid; gap: 14px; align-content: start; min-height: 120px; }
+  .sr-level__label { font-size: var(--cds-font-size-caption); font-weight: 600; color: var(--color-fg-muted); }
+  .sr-level__big { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin-top: 2px; }
+  .sr-level__value {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(2.5rem, 6.4cqi, 3.25rem);
+    line-height: 1;
+    letter-spacing: -.045em;
+    color: var(--sr-brand);
+    font-variant-numeric: tabular-nums;
+  }
+  .sr-level__sum .sr-table td, .sr-level__sum .sr-table th { padding-top: 8px; padding-bottom: 8px; }
+  .sr-level__sum .sr-tablewrap { max-height: none; }
+
   /* ---------- Tuiles d’état ---------- */
   .sr-tile__sub b { color: var(--color-fg); font-weight: 700; }
   /* Sur téléphone, les tuiles vont par deux. */
@@ -908,7 +987,7 @@
   .sr-table td b { font-weight: var(--cds-font-weight-medium); }
   .sr-table--tight td.sr-l { min-width: 0; }
   .sr-table--tight th, .sr-table--tight td { padding-left: 6px; padding-right: 6px; }
-  .sr-section { scroll-margin-top: 72px; }
+  .sr-section, .sr-card { scroll-margin-top: 72px; }
 
   /* ---------- Carte ---------- */
   .sr-map {
@@ -1962,6 +2041,27 @@
 
   <!-- ====================== Compétitions ====================== -->
   <section class="sr-page" id="competitions" role="tabpanel" aria-labelledby="tab-competitions" hidden>
+    <div class="sr-section" id="sec-level">
+      <h2 class="sr-h2">Mon niveau actuel</h2>
+      <p class="sr-section__note">Ce que dit ma dernière course, et la moyenne de mes 10 dernières</p>
+    </div>
+    <div class="sr-goal sr-last dash-skeleton" id="last-race" data-source="race_last"></div>
+    <div class="sr-tiles dash-skeleton" id="last-tiles" data-source="race_last" style="min-height: 92px"></div>
+    <article class="sr-card" id="card-level">
+      <div class="sr-card__head">
+        <div>
+          <h3 class="sr-card__title">Moyenne de mes 10 dernières courses</h3>
+          <p class="sr-card__note" id="level-note" data-source="race_level">Indice VDOT des courses sur route : 10 km, 20 km, semi et marathon</p>
+        </div>
+        <div class="sr-legend" id="level-legend" data-source="race_level"></div>
+      </div>
+      <div class="sr-level">
+        <div class="sr-level__head dash-skeleton" id="level-head" data-source="race_level"></div>
+        <div class="sr-chart sr-level__chart dash-skeleton" id="c-level" data-source="race_level" style="--h: 220px"></div>
+        <div class="sr-level__sum dash-skeleton" id="level-sum" data-source="race_level"></div>
+      </div>
+    </article>
+
     <div class="sr-section">
       <h2 class="sr-h2">Palmarès</h2>
       <p class="sr-section__note">Chrono officiel quand je l’ai noté, sinon temps écoulé</p>

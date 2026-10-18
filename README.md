@@ -1,6 +1,7 @@
 # Sillage
 
-Mes performances en course à pied depuis 2018 : volume, allures, cardio, dénivelé, compétitions et gestion de course,
+Mes performances en course à pied depuis 2018 : volume, allures, cardio, dénivelé, compétitions (ce que dit ma
+dernière course, mon niveau sur les 10 dernières) et gestion de course,
 préparation de la prochaine course objectif, charge d’entraînement, séances clés, carte, boucles et
 segments, et un récap à partager en story.
 En ligne sur **https://sillage.alexandrebarreau.fr**.
