@@ -2,6 +2,7 @@
 
 Une ligne par synchro, la plus récente en haut.
 
+- 2026-10-18 02:08 · tours et records de 20 sortie(s) (112/730 complètes) ; segments de 20 sortie(s) (112/730 complètes) · Aucune nouvelle sortie. Seule compétition de la fenêtre : 20 km de Paris (11/10), inchangée, la description ne donne ni chrono officiel ni classement. Les autres sorties sont des footings ou des séances.
 - 2026-10-17 02:08 · tours et records de 20 sortie(s) (92/730 complètes) ; segments de 20 sortie(s) (92/730 complètes) · Aucune nouvelle sortie. Seule compétition de la fenêtre : 20 km de Paris (11/10), inchangée ; la description ne donne ni chrono officiel ni classement. Les autres sorties sont des footings/séances.
 - 2026-10-16 02:09 · 1 activité(s) mise(s) à jour ; tours et records de 7 sortie(s) (72/730 complètes) ; segments de 20 sortie(s) (72/730 complètes) · Aucune nouvelle sortie ; seul le 20 km de Paris du 11/10 est une compétition, inchangé (pas de chrono officiel ni de classement dans la description).
 - 2026-10-15 02:09 · 1 nouvelle(s) activité(s) : 2026-10-14 Evening Run ; 1 activité(s) mise(s) à jour ; 1 sortie(s) avec cardio ajoutée(s) ; tours et records de 9 sortie(s) (65/730 complètes) ; segments de 21 sortie(s) (52/730 complètes) ; 1 tracé(s) GPS (719 au total) · Seule la sortie du 14/10 est nouvelle (footing, pas une compétition). Paris-Versailles et 20 km de Paris déjà connus, inchangés.
