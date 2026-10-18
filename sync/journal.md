@@ -2,6 +2,7 @@
 
 Une ligne par synchro, la plus récente en haut.
 
+- 2026-10-18 10:15 · 2 nouvelle(s) activité(s) : 2026-10-18 Morning Run, 2026-10-18 Semi de Rome 2026 ; 2 sortie(s) avec cardio ajoutée(s) ; tours et records de 2 sortie(s) (114/732 complètes) ; segments de 2 sortie(s) (114/732 complètes) ; 2 tracé(s) GPS (721 au total) ; compétition(s) ajoutée(s) : Semi de Rome (Semi) · Vérification horaire : Semi de Rome ajouté (titre explicite, calendrier, chrono officiel 1h13'06" dans la description). Le Morning Run de 1,4 km juste avant est l'échauffement, pas une compétition.
 - 2026-10-18 02:08 · tours et records de 20 sortie(s) (112/730 complètes) ; segments de 20 sortie(s) (112/730 complètes) · Aucune nouvelle sortie. Seule compétition de la fenêtre : 20 km de Paris (11/10), inchangée, la description ne donne ni chrono officiel ni classement. Les autres sorties sont des footings ou des séances.
 - 2026-10-17 02:08 · tours et records de 20 sortie(s) (92/730 complètes) ; segments de 20 sortie(s) (92/730 complètes) · Aucune nouvelle sortie. Seule compétition de la fenêtre : 20 km de Paris (11/10), inchangée ; la description ne donne ni chrono officiel ni classement. Les autres sorties sont des footings/séances.
 - 2026-10-16 02:09 · 1 activité(s) mise(s) à jour ; tours et records de 7 sortie(s) (72/730 complètes) ; segments de 20 sortie(s) (72/730 complètes) · Aucune nouvelle sortie ; seul le 20 km de Paris du 11/10 est une compétition, inchangé (pas de chrono officiel ni de classement dans la description).

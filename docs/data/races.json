@@ -38,5 +38,6 @@
 {"id":"18818613669","event":"adidas 10k Paris","category":"10 km","distance_km":10,"official_s":null,"place":null},
 {"id":"20055876154","event":"10 km du Trocadéro","category":"10 km","distance_km":10,"official_s":2033,"place":null},
 {"id":"20347272873","event":"Paris-Versailles","category":"Paris-Versailles","distance_km":16.2,"official_s":null,"place":null},
-{"id":"20538247057","event":"20 km de Paris","category":"20 km","distance_km":20,"official_s":null,"place":null}
+{"id":"20538247057","event":"20 km de Paris","category":"20 km","distance_km":20,"official_s":null,"place":null},
+{"id":"20630250256","event":"Semi de Rome","category":"Semi","distance_km":21.0975,"official_s":4386,"place":null}
 ]
