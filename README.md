@@ -1,9 +1,10 @@
 # Sillage
 
-Mes performances en course à pied depuis 2018 : volume, allures, cardio, dénivelé, compétitions (ce que dit ma
-dernière course, mon niveau sur les 10 dernières) et gestion de course,
-préparation de la prochaine course objectif, charge d’entraînement, séances clés, carte, boucles et
-segments, et un récap à partager en story.
+Mes performances en course à pied depuis 2018, en huit onglets : l’accueil (le sillage lumineux de toutes mes
+sorties autour de Paris, mes chiffres clés et où j’en suis), mes compétitions (niveau actuel, records, progression,
+gestion de course), la préparation de mon prochain objectif, mon entraînement, ma forme et mon cardio, tout
+l’historique, la carte de mes parcours, et un récap à partager en story. Les indicateurs techniques ont leur
+explication « Comment lire ».
 En ligne sur **https://sillage.alexandrebarreau.fr**.
 
 ## Comment ça marche
@@ -62,8 +63,12 @@ node scripts/check.cjs   # recalcule tous les calculs du site sur docs/data/
 | `docs/index.html` | la page |
 | `docs/assets/dash.js` | mini-runtime : chargement des données et calculs à la demande |
 | `docs/assets/calcs*.js` | les calculs (une fonction pure par indicateur) |
-| `docs/assets/kit.js`, `app.js`, `cardio.js` | formats, graphiques (d3), onglets historiques |
-| `docs/assets/train.js` | onglets Objectif, Entraînement et Séances |
+| `docs/assets/kit.js` | formats, infobulles, petits outils de dessin (d3) |
+| `docs/assets/app.js` | navigation entre les onglets, graphiques de l’accueil et de l’historique |
+| `docs/assets/home.js` | accueil : en-tête aux tracés lumineux, cartes « En ce moment », constats des onglets Historique et Carte |
+| `docs/assets/help.js` | explications « Comment lire » des indicateurs techniques (VDOT, forme, zones, charge…) |
+| `docs/assets/cardio.js` | onglet Forme & cardio, niveau actuel et VDOT, dénivelé |
+| `docs/assets/train.js` | onglets Objectif et Entraînement |
 | `docs/assets/map.js` | onglet Carte : tracés avec Leaflet, fond de carte OpenFreeMap avec MapLibre GL (chargés seulement à l’ouverture de l’onglet) |
 | `docs/assets/more.js` | gestion de course, plan d’allure, charge et reprise, boucles et segments, récap partageable |
 | `scripts/harvest.py` | lit les réponses du connecteur Strava et prépare la fiche d’analyse |

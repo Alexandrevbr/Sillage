@@ -90,8 +90,22 @@
       t.tabIndex = on ? 0 : -1;
     });
     pages.forEach((p) => {
-      document.getElementById(p).hidden = p !== page;
+      const el = document.getElementById(p);
+      const was = el.hidden;
+      el.hidden = p !== page;
+      // Fondu léger à chaque changement d’onglet.
+      if (p === page && was) {
+        el.classList.remove('is-in');
+        void el.offsetWidth;
+        el.classList.add('is-in');
+      }
     });
+    // L’onglet actif reste visible dans la barre (elle défile à l’horizontale sur téléphone).
+    const bar = tabs[0] && tabs[0].parentElement;
+    const on = tabs[pages.indexOf(page)];
+    if (bar && on && bar.scrollWidth > bar.clientWidth) {
+      bar.scrollTo({ left: Math.max(0, on.offsetLeft - (bar.clientWidth - on.offsetWidth) / 2), behavior: 'smooth' });
+    }
   };
   const select = (page, focus) => {
     if (!pages.includes(page)) return;
@@ -100,8 +114,26 @@
     dash.setLink(page);
     draw();
   };
+  // Après un changement d’onglet, la page commence en haut (sous la barre d’onglets) plutôt qu’au milieu.
+  const toTop = (smooth) => {
+    // La barre d’onglets colle en haut : on vise le bas de l’en-tête, juste au-dessus d’elle.
+    const head = $('.sr-top');
+    const y = head ? head.getBoundingClientRect().bottom + window.scrollY : 0;
+    if (window.scrollY > y) window.scrollTo({ top: Math.max(0, y), behavior: smooth ? 'smooth' : 'auto' });
+  };
+  // Liens internes vers un onglet (cartes « En ce moment » de l’accueil).
+  root.addEventListener('click', (e) => {
+    const a = e.target.closest('[data-goto]');
+    if (!a || !pages.includes(a.dataset.goto)) return;
+    e.preventDefault();
+    select(a.dataset.goto, false);
+    toTop(true);
+  });
   tabs.forEach((t, i) => {
-    t.addEventListener('click', () => select(t.dataset.page, false));
+    t.addEventListener('click', () => {
+      select(t.dataset.page, false);
+      toTop(false);
+    });
     t.addEventListener('keydown', (e) => {
       const step = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
       if (!step) return;
@@ -127,36 +159,6 @@
       run(redraw);
     });
   };
-
-  /* ================= Hero ================= */
-  function drawHero() {
-    const hl = dash.data('highlights');
-    if (hl.status === 'ok' && Array.isArray(hl.data) && hl.data[0]) $('#lastrace-pr').hidden = !hl.data[0].last_race_pr;
-    // Ancienne courbe décorative de l’en-tête : n’est dessinée que si son conteneur existe.
-    const box = $('#hero-bg');
-    if (!box) return;
-    const res = dash.data('by_week');
-    if (res.status !== 'ok' || !Array.isArray(res.data) || res.data.length < 2) return;
-    const weeks = res.data;
-    const w = SR.width(box, 200);
-    const h = Math.max(60, Math.floor(box.clientHeight || 140));
-    box.replaceChildren();
-    const svg = d3.select(box).append('svg')
-      .attr('viewBox', `0 0 ${w} ${h}`).attr('preserveAspectRatio', 'none')
-      .attr('width', '100%').attr('height', '100%');
-    const x = d3.scaleLinear([0, weeks.length - 1], [0, w]);
-    const y = d3.scaleLinear([0, d3.max(weeks, (d) => d.km_avg4) || 1], [h, h * 0.08]);
-    const grad = svg.append('defs').append('linearGradient')
-      .attr('id', 'sr-hero-grad').attr('x1', 0).attr('x2', 0).attr('y1', 0).attr('y2', 1);
-    [[0, 0.26], [0.25, 0.16], [0.5, 0.08], [0.75, 0.03], [1, 0]].forEach(([o, a]) => {
-      grad.append('stop').attr('offset', o).style('stop-color', SR.col.orange).style('stop-opacity', a);
-    });
-    svg.append('path').datum(weeks).style('fill', 'url(#sr-hero-grad)')
-      .attr('d', d3.area().x((d, i) => x(i)).y0(h).y1((d) => y(d.km_avg4)));
-    svg.append('path').datum(weeks).style('fill', 'none').style('stroke', SR.col.orange)
-      .attr('stroke-opacity', 0.55).attr('stroke-width', 1.5).attr('vector-effect', 'non-scaling-stroke')
-      .attr('stroke-linejoin', 'round').attr('d', d3.line().x((d, i) => x(i)).y((d) => y(d.km_avg4)));
-  }
 
   /* ================= Vue d’ensemble ================= */
   function drawYears() {
@@ -1378,19 +1380,18 @@
 
   /* ================= Orchestration ================= */
   const drawers = {
-    apercu: [drawYears, drawYtd, drawCumul, drawWeeks, drawCalendar],
-    annees: [drawYearTable, drawMonthHeat, drawBandMix, drawBandPace],
-    distances: [drawHist, drawScatter, drawBandTable, drawLongest],
+    apercu: [drawCumul, drawYtd, drawYears, drawCalendar],
+    historique: [drawYearTable, drawMonthHeat, drawWeeks, drawBandMix, drawBandPace, drawHist, drawScatter, drawBandTable, drawLongest,
+      drawClock, drawWeekdays, drawRegularity, drawPlaces, drawCross, drawKudos],
+    cardio: [drawCadence],
     competitions: [drawFacets, drawRaceTable],
-    habitudes: [drawClock, drawWeekdays, drawRegularity, drawCadence, drawPlaces, drawCross, drawKudos],
   };
-  // Graphiques des onglets Cardio et Analyses croisées, du dénivelé et du VDOT (cardio.js).
+  // Graphiques des autres fichiers (cardio.js, train.js, map.js, more.js, home.js), rangés par onglet.
   Object.entries(SR.pages || {}).forEach(([page, fns]) => {
     drawers[page] = (drawers[page] || []).concat(fns);
   });
   function draw() {
     run(() => SR.fillMarks());
-    run(drawHero);
     (drawers[ui.page] || []).forEach(run);
     if (ui.page === 'competitions') {
       const rec = $('#records');

@@ -1151,11 +1151,11 @@
   }
 
   SR.pages = SR.pages || {};
-  Object.assign(SR.pages, {
-    objectif: [drawGoalHero, drawGoalTiles, drawGoalBuild, drawGoalWeeks, drawGoalSplits, drawGoalCalendar],
-    entrainement: [drawTrainLead, drawEasyTiles, drawEasyWeeks, drawEasyList, drawVolTiles, drawVolume, drawVolRace, drawLongRuns,
-      drawRecovTiles, drawRecov, drawDensity],
-    seances: [drawCoverage, drawQualityWeeks, drawQualityList, drawQualityReps, drawEffortTable, drawEffortMonthly],
-  });
+  const add = (page, fns) => {
+    SR.pages[page] = (SR.pages[page] || []).concat(fns);
+  };
+  add('objectif', [drawGoalHero, drawGoalTiles, drawGoalBuild, drawGoalWeeks, drawGoalSplits, drawGoalCalendar]);
+  add('entrainement', [drawTrainLead, drawVolTiles, drawVolume, drawLongRuns, drawVolRace, drawCoverage, drawQualityWeeks, drawQualityList,
+    drawQualityReps, drawEasyTiles, drawEasyWeeks, drawEasyList, drawRecovTiles, drawRecov, drawDensity, drawEffortTable, drawEffortMonthly]);
   seg('vol-avg', 'volAvg', drawVolume);
 })();

@@ -309,6 +309,7 @@
   // Remplit chaque valeur marquée data-fmt depuis sa source.
   SR.fillMarks = (scope = root) => {
     scope.querySelectorAll('[data-source][data-field][data-fmt]').forEach((el) => {
+      if (el.dataset.counting) return; // décompte en cours (chiffres clés de l’accueil)
       const res = dash.data(el.dataset.source);
       if (res.status !== 'ok' || !Array.isArray(res.data)) {
         if (!el.dataset.filled) {

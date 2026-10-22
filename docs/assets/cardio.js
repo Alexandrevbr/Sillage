@@ -1644,12 +1644,14 @@
     enter(table);
   }
 
-  SR.pages = {
-    distances: [drawElevTiles, drawElevYears, drawTerrain, drawElevTop],
-    cardio: [drawCardioLead, drawCardioTiles, drawZoneYears, drawLoad, drawZoneMonths, drawZoneBands, drawLoadWeeks],
-    croise: [drawCroiseLead, drawHrPace, drawHrScatter, drawEff, drawEffYears, drawDrift, drawDriftYears, drawGrade, drawCadPace],
-    competitions: [drawLastRace, drawLevel, drawRaceTiles, drawRaceYears, drawRaceCats, drawVdot, drawPredict],
+  SR.pages = SR.pages || {};
+  const add = (page, fns) => {
+    SR.pages[page] = (SR.pages[page] || []).concat(fns);
   };
+  add('historique', [drawElevTiles, drawElevYears, drawTerrain, drawElevTop]);
+  add('cardio', [drawCardioLead, drawCardioTiles, drawLoad, drawLoadWeeks, drawZoneYears, drawZoneMonths, drawZoneBands,
+    drawCroiseLead, drawHrPace, drawHrScatter, drawEff, drawEffYears, drawDrift, drawDriftYears, drawGrade, drawCadPace]);
+  add('competitions', [drawLastRace, drawLevel, drawVdot, drawPredict, drawRaceTiles, drawRaceYears, drawRaceCats]);
   seg('load-range', 'loadRange', drawLoad);
   seg('zonemonths-by', 'zoneMonthsBy', drawZoneMonths);
 })();

@@ -640,5 +640,5 @@
   }
 
   SR.pages = SR.pages || {};
-  Object.assign(SR.pages, { carte: [drawMap] });
+  SR.pages.carte = (SR.pages.carte || []).concat([drawMap]);
 })();
