@@ -1,4 +1,4 @@
-/* Onglets Cardio et Analyses croisées, section dénivelé et indice VDOT. */
+/* Onglet Forme & cardio (forme, zones, efficacité, foulée), niveau actuel et VDOT de l’onglet Compétitions, dénivelé de l’Historique. */
 (() => {
   const SR = window.SR;
   const root = SR.root;
