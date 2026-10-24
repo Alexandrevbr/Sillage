@@ -422,7 +422,7 @@ dash.calc('recap', {
 
 dash.calc('athlete', {
   title: 'Fiche athlète',
-  description: 'Ma carte de visite de coureur, en chiffres parlants pour tous. En tête : la vitesse moyenne de mon record du 10 km (et le 100 m équivalent), celle tenue sur mon record du marathon, et mon meilleur classement rapporté au nombre de coureurs. Puis quatre points forts : la progression (la distance où mon record a le plus baissé depuis ma première course), les records battus rapportés au nombre de compétitions, la fréquence cardiaque à allure égale d’une année sur l’autre, et ma plus grosse semaine (comptée en marathons) avec la moyenne quotidienne de ma meilleure année. Enfin, mes meilleurs classements notés.',
+  description: 'Ma carte de visite de coureur, en chiffres parlants pour tous. En tête : la vitesse moyenne de mon record du 10 km (et le 100 m équivalent), celle tenue sur mon record du semi-marathon, et mon meilleur classement rapporté au nombre de coureurs. Puis quatre points forts : la progression (la distance où mon record a le plus baissé depuis ma première course), les records battus rapportés au nombre de compétitions, la fréquence cardiaque à allure égale d’une année sur l’autre, et ma plus grosse semaine (comptée en marathons) avec la moyenne quotidienne de ma meilleure année. Enfin, mes meilleurs classements notés.',
   inputs: ['race_results', 'race_best', 'highlights', 'hr_pace', 'hr_pace_focus'],
   fn: (race_results, race_best, highlights, hr_pace, hr_pace_focus) => {
     const h = highlights[0];
@@ -475,11 +475,11 @@ dash.calc('athlete', {
         best_year: h.best_year, best_year_km: h.best_year_km, per_day_km: h.best_year_km / days };
     }
     const ten = best('10 km');
-    const mara = best('Marathon');
+    const semi = best('Semi');
     return [{
       races: race_results.length, prs: race_results.filter((r) => r.pr).length, first_race_year: race_results[0].year,
       speed: ten ? { time_s: ten.time_s, kmh: 36000 / ten.time_s, per100_s: ten.time_s / 100, event: ten.event, date: ten.date } : null,
-      marathon: mara ? { time_s: mara.time_s, kmh: (42.195 * 3600) / mara.time_s, event: mara.event, date: mara.date } : null,
+      semi: semi ? { time_s: semi.time_s, kmh: (21.0975 * 3600) / semi.time_s, event: semi.event, date: semi.date } : null,
       star: star ? { event: star.event, date: star.date, time_s: star.time_s, rank: star.rank, field: star.field, top_pct: star.top_pct } : null,
       progress: prog, heart, volume, placings,
     }];

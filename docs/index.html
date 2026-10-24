@@ -1615,6 +1615,14 @@
   /* ---------- Meilleurs classements ---------- */
   .sr-placings { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--cds-gap-sm); grid-template-columns: repeat(2, minmax(0, 1fr)); }
   @container sr (min-width: 760px) { .sr-placings { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--cds-gap-md); } }
+  /* Pas de case vide : selon le nombre de tuiles, la première (la meilleure) s’élargit pour remplir sa ligne.
+     Deux colonnes : nombre impair → pleine largeur. Trois colonnes : reste 2 → deux colonnes, reste 1 → pleine largeur. */
+  .sr-placing:first-child:nth-last-child(odd) { grid-column: 1 / -1; }
+  @container sr (min-width: 760px) {
+    .sr-placing:first-child:nth-last-child(odd) { grid-column: auto; }
+    .sr-placing:first-child:nth-last-child(3n + 2) { grid-column: span 2; }
+    .sr-placing:first-child:nth-last-child(3n + 1) { grid-column: 1 / -1; }
+  }
   @container sr (max-width: 330px) { .sr-placings { grid-template-columns: minmax(0, 1fr); } }
   .sr-placings.dash-skeleton { min-height: 320px; border-radius: 22px; }
   .sr-placing {

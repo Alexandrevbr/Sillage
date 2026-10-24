@@ -62,10 +62,10 @@
       items.push(item(SR.n1(s.kmh), 'km/h', 'sur 10 km',
         `Record en ${SR.dur(s.time_s)} : le 100 m en ${SR.n1(s.per100_s)}${NB}s, cent fois de suite.`));
     }
-    const m = a.marathon;
+    const m = a.semi;
     if (m) {
-      items.push(item(SR.n1(m.kmh), 'km/h', `pendant ${SR.dur(m.time_s)}`,
-        `Un marathon entier, 42,195${NB}km, à ce rythme.`));
+      items.push(item(SR.n1(m.kmh), 'km/h', 'sur semi-marathon',
+        `Record en ${SR.dur(m.time_s)} : 21${NB}km d’affilée à ce rythme.`));
     }
     const st = a.star;
     if (st) {
@@ -84,7 +84,7 @@
     }
     const bits = [];
     if (s) bits.push(`10 km à ${SR.n1(s.kmh)} km/h`);
-    if (m) bits.push(`un marathon en ${SR.dur(m.time_s)}`);
+    if (m) bits.push(`semi à ${SR.n1(m.kmh)} km/h`);
     if (st) bits.push(`top ${topTxt(st.top_pct)} ${au(st.event)}`);
     shareText = `Alexandre Barreau, coureur sur route${bits.length ? ` : ${bits.join(', ')}` : ''}.`;
     enter(box);
@@ -290,7 +290,8 @@
     const d = SR.ready(box, ['athlete']);
     if (!d || !d[0].length) return;
     const [[a]] = d;
-    const list = a.placings.filter((p) => p.rank != null).slice(0, 6);
+    // Seulement les classements qui comptent : podiums, top 1 % quand l’effectif est connu, top 10 sinon.
+    const list = a.placings.filter((p) => p.podium || (p.top_pct != null ? p.top_pct <= 1 : p.rank != null && p.rank <= 10)).slice(0, 6);
     box.replaceChildren(...list.map((p) => {
       const li = SR.el('li', `sr-placing${p.podium ? ' is-podium' : ''}`);
       const top = SR.el('div', 'sr-placing__top');
@@ -301,7 +302,10 @@
       top.append(rank);
       if (badge) top.append(badge);
       li.append(top);
+      // Ce que j’ai noté en plus de la place (« 3e, premier podium » → « Premier podium »).
+      const extra = String(p.place).replace(/^\s*\d[\d\s\u00a0\u202f]*e\b\s*(\/\s*\d[\d\s\u00a0\u202f]*)?[,;·\s-]*/, '').trim();
       if (p.field) li.append(SR.el('span', 'sr-placing__field', `sur ${SR.n0(p.field)} coureurs`));
+      else if (extra) li.append(SR.el('span', 'sr-placing__field', cap1(extra)));
       li.append(SR.el('span', 'sr-placing__event', p.event), SR.el('span', 'sr-placing__meta', `${SR.dmed(p.date)} · ${SR.dur(p.time_s)}`));
       return li;
     }));
