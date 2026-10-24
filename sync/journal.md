@@ -2,6 +2,7 @@
 
 Une ligne par synchro, la plus récente en haut.
 
+- 2026-10-24 19:14 · 1 nouvelle(s) activité(s) : 2026-10-24 Afternoon Run ; 1 activité(s) mise(s) à jour ; 1 sortie(s) avec cardio ajoutée(s) ; tours et records de 1 sortie(s) (238/736 complètes) ; segments de 1 sortie(s) (238/736 complètes) ; 1 tracé(s) GPS (725 au total) · Vérification horaire : une nouvelle sortie (Afternoon Run, 7 km à Marseille, allure footing, temps écoulé très supérieur au temps en mouvement) ; aucune compétition dans la fenêtre.
 - 2026-10-24 02:09 · tours et records de 20 sortie(s) (237/735 complètes) ; segments de 20 sortie(s) (237/735 complètes) · Aucune nouvelle sortie ; les deux compétitions connues de la fenêtre (20 km de Paris, Semi de Rome) sont inchangées. Les autres sorties sont des footings, du fractionné (7x600m VMA) ou un échauffement à Rome.
 - 2026-10-23 02:09 · 2 activité(s) mise(s) à jour ; tours et records de 20 sortie(s) (217/735 complètes) ; segments de 20 sortie(s) (217/735 complètes) · Aucune nouvelle compétition : 20 km de Paris et Semi de Rome déjà connus, inchangés. Le reste (sorties du soir, VMA 7x600m, footing de Rome avant le semi) n'est pas de la compétition.
 - 2026-10-22 02:09 · 1 activité(s) mise(s) à jour ; tours et records de 20 sortie(s) (197/735 complètes) ; segments de 20 sortie(s) (197/735 complètes) · Aucune nouvelle compétition. 20 km de Paris et Semi de Rome déjà connus, inchangés. Le footing de 1,4 km avant le semi de Rome est un échauffement, pas une course.
