@@ -371,6 +371,8 @@
   /* ---------- Pages & cartes ---------- */
   .sr-page { display: grid; gap: var(--cds-gap-lg); }
   .sr-page[hidden] { display: none; }
+  /* Un lien vers un onglet (#fiche, #competitions…) ouvre la page tout en haut, en-tête compris. */
+  .sr-page { scroll-margin-top: 100vh; }
   .sr-section {
     display: flex;
     flex-wrap: wrap;
@@ -1429,6 +1431,224 @@
     @keyframes sr-pagein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
   }
 </style>
+<style>
+  /* ================= Fiche athlète : ma carte de visite de coureur ================= */
+  .sr-athlete {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    border-radius: 28px;
+    background: #090e1e;
+    background-image:
+      radial-gradient(70% 45% at 100% 0%, rgb(50 82 223 / .38), rgb(50 82 223 / 0) 70%),
+      radial-gradient(60% 40% at 0% 100%, rgb(39 58 140 / .4), rgb(39 58 140 / 0) 70%),
+      linear-gradient(180deg, #0c1329, #080c1a);
+    color: #fff;
+    display: grid;
+    gap: 22px;
+    padding: 10px 10px 22px;
+    box-shadow: 0 30px 60px -34px rgb(10 16 34 / .6);
+  }
+  @media (prefers-color-scheme: dark) {
+    .sr-athlete { box-shadow: 0 0 0 1px rgb(127 151 255 / .16), 0 30px 60px -34px rgb(0 0 0 / .85); }
+  }
+  /* Dès qu’il y a la place, la photo à gauche : jamais moins haute qu’au format 5:7, étirée si le texte est plus haut. */
+  @container sr (min-width: 600px) {
+    .sr-athlete {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      align-items: stretch;
+      gap: clamp(24px, 4cqi, 60px);
+      padding: 12px clamp(24px, 4.4cqi, 64px) 12px 12px;
+    }
+  }
+  .sr-athlete__photo {
+    position: relative;
+    margin: 0;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #1a2338;
+    box-shadow: 0 0 0 1px rgb(255 255 255 / .08);
+  }
+  /* Hauteur minimale au format 5:7 (la largeur fixe la hauteur) ; la photo couvre le cadre, quitte à rogner les côtés. */
+  .sr-athlete__photo::before { content: ""; display: block; padding-top: 140%; }
+  .sr-athlete__photo picture { display: contents; }
+  .sr-athlete__photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 100%; }
+  .sr-athlete__caption {
+    position: absolute;
+    left: 10px;
+    bottom: 10px;
+    max-width: 62%;
+    display: grid;
+    gap: 1px;
+    padding: 7px 11px 8px;
+    border-radius: 13px;
+    background: rgb(8 12 26 / .6);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    font-size: .6875rem;
+    line-height: 1.35;
+    color: rgb(233 238 249 / .78);
+  }
+  .sr-athlete__caption b { color: #fff; font-size: .75rem; font-weight: 700; }
+
+  .sr-athlete__body { container: athlete / inline-size; min-width: 0; display: grid; align-content: center; gap: clamp(20px, 5cqi, 34px); padding: 4px 8px 0; }
+  @container sr (min-width: 600px) { .sr-athlete__body { padding: 18px 0; } }
+  .sr-athlete__id { display: grid; gap: 12px; }
+  .sr-athlete .sr-eyebrow { color: #a9bbff; }
+  .sr-athlete__name {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(2.75rem, 14.5cqi, 5.6rem);
+    line-height: .9;
+    letter-spacing: -.055em;
+    color: #fff;
+  }
+  .sr-athlete__name span {
+    display: block;
+    padding-bottom: .06em;
+    background: linear-gradient(90deg, #dbe2ff 0%, #8ea4ff 55%, #5f7cff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .sr-athlete__tag { font-size: clamp(.9375rem, 3.2cqi, 1.0625rem); color: rgb(233 238 249 / .74); }
+  .sr-athlete__block { display: grid; gap: 10px; }
+  .sr-athlete__label { font-size: .6875rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: rgb(233 238 249 / .6); }
+  .sr-athlete__big { list-style: none; margin: 0; padding: 0; display: grid; min-height: 120px; }
+  .sr-athlete__big.dash-skeleton { min-height: 230px; border-radius: 16px; }
+  /* Sur téléphone, une ligne par chiffre : la valeur à gauche, ce qu’elle veut dire à droite. */
+  .sr-athlete__bigitem {
+    display: grid;
+    grid-template-columns: 8.4rem minmax(0, 1fr);
+    column-gap: 14px;
+    row-gap: 2px;
+    align-items: baseline;
+    padding: 14px 0;
+    border-top: 1px solid rgb(255 255 255 / .1);
+  }
+  .sr-athlete__bigitem:first-child { border-top: 0; padding-top: 2px; }
+  .sr-athlete__bigitem:last-child { padding-bottom: 0; }
+  .sr-athlete__bigval {
+    grid-row: span 2;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.75rem;
+    line-height: 1.05;
+    letter-spacing: -.04em;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .sr-athlete__biglabel { font-size: .9375rem; font-weight: 700; color: #fff; line-height: 1.3; }
+  .sr-athlete__bigsub { grid-column: 2; font-size: var(--cds-font-size-caption); line-height: 1.45; color: rgb(233 238 249 / .62); }
+  @container athlete (min-width: 540px) {
+    .sr-athlete__big { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .sr-athlete__bigitem,
+    .sr-athlete__bigitem:first-child,
+    .sr-athlete__bigitem:last-child {
+      grid-template-columns: minmax(0, 1fr);
+      align-content: start;
+      padding: 16px 16px 17px;
+      border: 0;
+      border-radius: 16px;
+      background: rgb(255 255 255 / .055);
+      box-shadow: inset 0 0 0 1px rgb(255 255 255 / .1);
+    }
+    .sr-athlete__bigval { grid-row: auto; font-size: clamp(1.7rem, 5.2cqi, 2.3rem); margin-bottom: 6px; }
+    .sr-athlete__bigsub { grid-column: 1; }
+  }
+  .sr-athlete .sr-unit { color: rgb(233 238 249 / .55); }
+
+  .sr-athlete__cta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+  .sr-athlete__share { display: inline-flex; align-items: center; gap: 8px; font-size: .9375rem; padding: 12px 20px; }
+  .sr-athlete__share svg { width: 18px; height: 18px; flex: none; }
+  .sr-athlete__link { font-size: var(--cds-font-size-body); font-weight: 700; color: #c9d4ff; border-radius: 8px; }
+  .sr-athlete__link::after { content: " →"; }
+  .sr-athlete__link:hover { color: #fff; }
+  .sr-athlete__link:focus-visible { outline: 2px solid #a9bbff; outline-offset: 3px; }
+  .sr-athlete__hint { flex-basis: 100%; min-height: 1.2em; margin-top: -4px; font-size: var(--cds-font-size-caption); color: rgb(233 238 249 / .7); }
+  .sr-athlete__hint:empty { display: none; }
+
+  /* ---------- Points forts ---------- */
+  .sr-forces { display: grid; gap: var(--cds-gap-sm); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @container sr (min-width: 960px) { .sr-forces { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--cds-gap-md); } }
+  .sr-forces.dash-skeleton { min-height: 290px; border-radius: 22px; }
+  @container sr (max-width: 330px) { .sr-forces { grid-template-columns: minmax(0, 1fr); } }
+  @container sr (max-width: 400px) {
+    .sr-force__head { gap: 8px; }
+    .sr-force__icon { width: 28px; height: 28px; border-radius: 9px; }
+    .sr-force__label { letter-spacing: .07em; }
+  }
+  .sr-force {
+    position: relative;
+    display: grid;
+    grid-template-rows: auto auto auto auto 1fr;
+    min-width: 0;
+    padding: clamp(14px, 2cqi, 20px);
+    border-radius: 22px;
+    background: var(--color-panel);
+    border: 1px solid var(--color-border-line);
+    box-shadow: var(--sr-shadow-card);
+  }
+  .sr-force__head { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .sr-force__icon { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; background: var(--sr-tint); color: var(--sr-brand); }
+  .sr-force__icon svg { width: 17px; height: 17px; }
+  .sr-force__label { margin: 0; font-size: .6875rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--color-fg-muted); line-height: 1.25; }
+  .sr-force__value {
+    margin-top: 14px;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(1.55rem, 3.2cqi, 2.15rem);
+    line-height: 1.05;
+    letter-spacing: -.04em;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .sr-force__qual { margin-top: 3px; font-size: var(--cds-font-size-body); font-weight: 700; color: var(--sr-brand); }
+  .sr-force__sub { margin-top: 6px; font-size: var(--cds-font-size-caption); line-height: 1.45; color: var(--color-fg-muted); }
+  .sr-force__chart { position: relative; align-self: end; margin-top: 14px; min-height: 64px; }
+  .sr-force__chart svg { display: block; overflow: visible; }
+  .sr-force__chart text { font-family: var(--font-sans); }
+  .sr-force__chart [tabindex]:focus { outline: none; }
+  .sr-force__chart [tabindex]:focus-visible { outline: 2px solid var(--sr-brand); outline-offset: 2px; }
+
+  /* ---------- Meilleurs classements ---------- */
+  .sr-placings { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--cds-gap-sm); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @container sr (min-width: 760px) { .sr-placings { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--cds-gap-md); } }
+  @container sr (max-width: 330px) { .sr-placings { grid-template-columns: minmax(0, 1fr); } }
+  .sr-placings.dash-skeleton { min-height: 320px; border-radius: 22px; }
+  .sr-placing {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    padding: clamp(14px, 2cqi, 20px);
+    border-radius: 20px;
+    background: var(--color-panel);
+    border: 1px solid var(--color-border-line);
+    box-shadow: var(--sr-shadow-card);
+  }
+  .sr-placing.is-podium {
+    border-color: color-mix(in srgb, var(--sr-brand) 45%, var(--color-border-line));
+    background: linear-gradient(160deg, var(--sr-tint), var(--color-panel) 70%);
+  }
+  .sr-placing__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .sr-placing__rank {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(1.75rem, 3.6cqi, 2.3rem);
+    line-height: 1;
+    letter-spacing: -.04em;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .sr-placing__rank sup { font-size: .5em; margin-left: 1px; vertical-align: .75em; line-height: 0; letter-spacing: 0; }
+  .sr-placing__field { font-size: var(--cds-font-size-caption); font-weight: 600; color: var(--color-fg-muted); margin-top: 4px; }
+  .sr-placing__event { margin-top: auto; padding-top: 12px; font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; }
+  .sr-placing__meta { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+  .sr-placing__badge { flex: none; font-size: .6875rem; font-weight: 700; padding: 4px 9px; border-radius: 999px; background: var(--sr-tint); color: var(--sr-brand); white-space: nowrap; }
+  .sr-placing__badge--podium { background: var(--sr-brand-fill); color: var(--sr-on-brand); }
+</style>
 </head>
 <body>
 <main class="page">
@@ -1445,6 +1665,7 @@
 
   <nav class="sr-tabs" role="tablist" aria-label="Sections du tableau de bord">
     <button class="sr-tab" role="tab" id="tab-apercu" data-page="apercu" aria-controls="apercu" aria-selected="true">Accueil</button>
+    <button class="sr-tab" role="tab" id="tab-fiche" data-page="fiche" aria-controls="fiche" aria-selected="false" tabindex="-1">Fiche athlète</button>
     <button class="sr-tab" role="tab" id="tab-competitions" data-page="competitions" aria-controls="competitions" aria-selected="false" tabindex="-1">Compétitions</button>
     <button class="sr-tab" role="tab" id="tab-objectif" data-page="objectif" aria-controls="objectif" aria-selected="false" tabindex="-1">Objectif</button>
     <button class="sr-tab" role="tab" id="tab-entrainement" data-page="entrainement" aria-controls="entrainement" aria-selected="false" tabindex="-1">Entraînement</button>
@@ -1569,6 +1790,47 @@
         </div>
       </article>
     </div>
+  </section>
+
+  <!-- ====================== Fiche athlète ====================== -->
+  <section class="sr-page" id="fiche" role="tabpanel" aria-labelledby="tab-fiche" hidden>
+    <article class="sr-athlete" id="athlete" aria-labelledby="athlete-name">
+      <figure class="sr-athlete__photo">
+        <picture>
+          <source srcset="assets/athlete.webp" type="image/webp">
+          <img src="assets/athlete.jpg" width="1000" height="1500" loading="lazy" decoding="async" alt="Alexandre Barreau en pleine course au 20 km de Paris, le 11 octobre 2026, maillot Cadence Runners et dossard 4083">
+        </picture>
+        <figcaption class="sr-athlete__caption" id="athlete-caption"><b>20 km de Paris 2026</b></figcaption>
+      </figure>
+      <div class="sr-athlete__body">
+        <div class="sr-athlete__id">
+          <p class="sr-eyebrow">Fiche athlète · course sur route</p>
+          <h2 class="sr-athlete__name" id="athlete-name">Alexandre <span>Barreau</span></h2>
+          <p class="sr-athlete__tag">Cadence Runners · Paris · du 10 km au marathon</p>
+        </div>
+        <div class="sr-athlete__block">
+          <p class="sr-athlete__label">En trois chiffres</p>
+          <ul class="sr-athlete__big dash-skeleton" id="athlete-big" data-source="athlete race_results"></ul>
+        </div>
+        <div class="sr-athlete__cta">
+          <button type="button" class="sr-btn sr-btn--primary sr-athlete__share" id="athlete-share"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3.5M7.5 8 12 3.5 16.5 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 11H6.5A1.5 1.5 0 0 0 5 12.5v7A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5v-7a1.5 1.5 0 0 0-1.5-1.5H16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Partager ma fiche</span></button>
+          <a class="sr-athlete__link" href="#competitions" data-goto="competitions">Toutes mes courses</a>
+          <p class="sr-athlete__hint" id="athlete-share-hint" role="status" aria-live="polite"></p>
+        </div>
+      </div>
+    </article>
+
+    <div class="sr-section" id="points-forts">
+      <h2 class="sr-h2"><span class="sr-num">01</span>Mes points forts</h2>
+      <p class="sr-section__note">Ce qui fait la différence, chiffres à l’appui</p>
+    </div>
+    <div class="sr-forces dash-skeleton" id="athlete-forces" data-source="athlete race_results"></div>
+
+    <div class="sr-section" id="classements">
+      <h2 class="sr-h2"><span class="sr-num">02</span>Mes meilleurs classements</h2>
+      <p class="sr-section__note">Ma place à l’arrivée et, quand je connais l’effectif, mon rang en pourcentage du peloton</p>
+    </div>
+    <ol class="sr-placings dash-skeleton" id="athlete-placings" data-source="athlete"></ol>
   </section>
 
   <!-- ====================== Compétitions ====================== -->
@@ -2736,6 +2998,7 @@
 <script src="assets/map.js"></script>
 <script src="assets/more.js"></script>
 <script src="assets/home.js"></script>
+<script src="assets/athlete.js"></script>
 <script src="assets/help.js"></script>
 <script src="assets/app.js"></script>
 </body>

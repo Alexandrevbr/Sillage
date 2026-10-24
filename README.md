@@ -1,7 +1,8 @@
 # Sillage
 
-Mes performances en course à pied depuis 2018, en huit onglets : l’accueil (le sillage lumineux de toutes mes
-sorties autour de Paris, mes chiffres clés et où j’en suis), mes compétitions (niveau actuel, records, progression,
+Mes performances en course à pied depuis 2018, en neuf onglets : l’accueil (le sillage lumineux de toutes mes
+sorties autour de Paris, mes chiffres clés et où j’en suis), ma fiche athlète (ma carte de visite de coureur, en
+chiffres parlants pour tous : vitesse en km/h, place dans le peloton, progression, cœur, volume, meilleurs classements), mes compétitions (niveau actuel, records, progression,
 gestion de course), la préparation de mon prochain objectif, mon entraînement, ma forme et mon cardio, tout
 l’historique, la carte de mes parcours, et un récap à partager en story. Les indicateurs techniques ont leur
 explication « Comment lire ».
@@ -66,6 +67,8 @@ node scripts/check.cjs   # recalcule tous les calculs du site sur docs/data/
 | `docs/assets/kit.js` | formats, infobulles, petits outils de dessin (d3) |
 | `docs/assets/app.js` | navigation entre les onglets, graphiques de l’accueil et de l’historique |
 | `docs/assets/home.js` | accueil : en-tête aux tracés lumineux, cartes « En ce moment », constats des onglets Historique et Carte |
+| `docs/assets/athlete.js` | onglet Fiche athlète : photo, trois chiffres parlants, points forts, meilleurs classements, partage ; rien n’y reprend l’accueil |
+| `docs/assets/athlete.webp`, `athlete.jpg` | la photo de la fiche (20 km de Paris 2026), en WebP et en JPEG de secours |
 | `docs/assets/help.js` | explications « Comment lire » des indicateurs techniques (VDOT, forme, zones, charge…) |
 | `docs/assets/cardio.js` | onglet Forme & cardio, niveau actuel et VDOT, dénivelé |
 | `docs/assets/train.js` | onglets Objectif et Entraînement |

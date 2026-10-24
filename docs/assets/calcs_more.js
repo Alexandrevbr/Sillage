@@ -419,3 +419,69 @@ dash.calc('recap', {
     });
   },
 });
+
+dash.calc('athlete', {
+  title: 'Fiche athlète',
+  description: 'Ma carte de visite de coureur, en chiffres parlants pour tous. En tête : la vitesse moyenne de mon record du 10 km (et le 100 m équivalent), celle tenue sur mon record du marathon, et mon meilleur classement rapporté au nombre de coureurs. Puis quatre points forts : la progression (la distance où mon record a le plus baissé depuis ma première course), les records battus rapportés au nombre de compétitions, la fréquence cardiaque à allure égale d’une année sur l’autre, et ma plus grosse semaine (comptée en marathons) avec la moyenne quotidienne de ma meilleure année. Enfin, mes meilleurs classements notés.',
+  inputs: ['race_results', 'race_best', 'highlights', 'hr_pace', 'hr_pace_focus'],
+  fn: (race_results, race_best, highlights, hr_pace, hr_pace_focus) => {
+    const h = highlights[0];
+    if (!race_results.length) return [];
+    const best = (c) => race_best.find((b) => b.category === c) || null;
+
+    // Classements notés : « 47e / 31 000 », « 3e, premier podium », « 370e »…
+    const num = (s) => Number(String(s).replace(/\D/g, ''));
+    const placings = race_results.filter((r) => r.place).map((r) => {
+      const m = String(r.place).match(/(\d[\d\s  ]*?)\s*e\b/);
+      const f = String(r.place).match(/\/\s*(\d[\d\s  ]*)/);
+      const rank = m ? num(m[1]) : null;
+      const field = f ? num(f[1]) : null;
+      return {
+        id: r.id, event: r.event, date: r.date, category: r.category, time_s: r.time_s, place: r.place,
+        rank, field, top_pct: rank && field ? (rank / field) * 100 : null, podium: rank != null && rank <= 3,
+      };
+    });
+    // Podiums d’abord, puis la plus petite part du peloton devant moi, puis les places sans effectif connu.
+    const score = (p) => (p.podium ? p.rank : p.top_pct != null ? 10 + p.top_pct : p.rank != null ? 1000 + p.rank : 1e6);
+    placings.sort((a, b) => score(a) - score(b) || (a.date < b.date ? 1 : -1));
+    const fielded = placings.filter((p) => p.top_pct != null);
+    const star = fielded.length ? fielded.reduce((a, p) => (p.top_pct < a.top_pct ? p : a)) : null;
+
+    // Progression : la distance où le record a le plus baissé, en proportion, depuis ma première course.
+    const prog = race_best.filter((b) => b.starts >= 2 && b.gain_s > 0 && b.category !== 'Trail')
+      .map((b) => {
+        const first = race_results.find((r) => r.category === b.category);
+        return { category: b.category, first_time_s: b.first_time_s, first_date: first.date,
+          best_time_s: b.time_s, best_date: b.date, gain_s: b.gain_s, gain_pct: b.gain_s / b.first_time_s };
+      })
+      .reduce((a, p) => (!a || p.gain_pct > a.gain_pct ? p : a), null);
+
+    // Cœur : FC moyenne, chaque année, sur la tranche d’allure suivie (hr_pace_focus).
+    const f = hr_pace_focus[0] || null;
+    const heart = f ? {
+      pace_lo: f.pace_lo, pace_hi: f.pace_hi, kmh_lo: 3600 / f.pace_hi, kmh_hi: 3600 / f.pace_lo,
+      from_year: f.from_year, from_hr: f.from_hr, to_year: f.to_year, to_hr: f.to_hr, delta_bpm: f.delta_bpm,
+      years: hr_pace.filter((r) => r.pace_lo === f.pace_lo && r.year >= f.from_year).map((r) => ({ year: r.year, hr: r.hr, points: r.points })),
+    } : null;
+
+    // Volume : la plus grosse semaine (en marathons de 42,195 km) et la moyenne par jour de la meilleure année.
+    let volume = null;
+    if (h && h.best_week_km) {
+      const leap = (y) => (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+      const days = h.best_year === h.ytd_year
+        ? Math.round((Date.parse(h.ytd_as_of) - Date.UTC(h.best_year, 0, 1)) / 864e5) + 1
+        : leap(h.best_year) ? 366 : 365;
+      volume = { best_week: h.best_week, best_week_km: h.best_week_km, marathons: h.best_week_km / 42.195,
+        best_year: h.best_year, best_year_km: h.best_year_km, per_day_km: h.best_year_km / days };
+    }
+    const ten = best('10 km');
+    const mara = best('Marathon');
+    return [{
+      races: race_results.length, prs: race_results.filter((r) => r.pr).length, first_race_year: race_results[0].year,
+      speed: ten ? { time_s: ten.time_s, kmh: 36000 / ten.time_s, per100_s: ten.time_s / 100, event: ten.event, date: ten.date } : null,
+      marathon: mara ? { time_s: mara.time_s, kmh: (42.195 * 3600) / mara.time_s, event: mara.event, date: mara.date } : null,
+      star: star ? { event: star.event, date: star.date, time_s: star.time_s, rank: star.rank, field: star.field, top_pct: star.top_pct } : null,
+      progress: prog, heart, volume, placings,
+    }];
+  },
+});
