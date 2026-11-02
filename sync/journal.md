@@ -2,6 +2,7 @@
 
 Une ligne par synchro, la plus récente en haut.
 
+- 2026-11-02 01:12 · 1 nouvelle(s) activité(s) : 2026-11-01 Afternoon Run ; 1 sortie(s) avec cardio ajoutée(s) ; tours et records de 21 sortie(s) (406/744 complètes) ; segments de 21 sortie(s) (406/744 complètes) ; 1 tracé(s) GPS (733 au total) · Une nouvelle sortie (footing du 1er novembre, 7,5 km lent), pas une compétition. Semi de Rome et Marseille-Cassis inchangés.
 - 2026-11-01 01:10 · 1 activité(s) mise(s) à jour ; tours et records de 20 sortie(s) (385/743 complètes) ; segments de 20 sortie(s) (385/743 complètes) · Aucune nouvelle compétition ; Semi de Rome et Marseille-Cassis déjà connues, inchangées (pas de chrono officiel pour Cassis). Les autres sorties sont des footings ou séances de VMA.
 - 2026-10-31 01:09 · tours et records de 20 sortie(s) (365/743 complètes) ; segments de 20 sortie(s) (365/743 complètes) · Aucune nouvelle sortie. Compétitions déjà connues (Semi de Rome, Marseille-Cassis) inchangées ; pas de chrono officiel dans la description de Marseille-Cassis.
 - 2026-10-30 01:09 · 3 activité(s) mise(s) à jour ; tours et records de 20 sortie(s) (345/743 complètes) ; segments de 20 sortie(s) (345/743 complètes) · Aucune nouvelle sortie. Semi de Rome et Marseille-Cassis déjà connus, inchangés (pas de chrono officiel ni de classement dans la description de Marseille-Cassis). Les autres sorties sont des footings, séances de VMA ou échauffements.
