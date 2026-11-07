@@ -2,6 +2,7 @@
 
 Une ligne par synchro, la plus récente en haut.
 
+- 2026-11-07 01:09 · 1 activité(s) mise(s) à jour ; tours et records de 20 sortie(s) (489/747 complètes) ; segments de 20 sortie(s) (489/747 complètes) · Aucune nouvelle sortie. Marseille-Cassis déjà connue, inchangée ; les autres sorties sont des entraînements (VMA 11x400, footings).
 - 2026-11-06 15:18 · 1 nouvelle(s) activité(s) : 2026-11-06 Lunch Run ; 1 sortie(s) avec cardio ajoutée(s) ; tours et records de 1 sortie(s) (469/747 complètes) ; segments de 1 sortie(s) (469/747 complètes) ; 1 tracé(s) GPS (736 au total) · Vérification horaire : une nouvelle sortie (Lunch Run du 6/11, 7,2 km en endurance), aucune compétition dans la fenêtre.
 - 2026-11-06 01:09 · tours et records de 20 sortie(s) (468/746 complètes) ; segments de 20 sortie(s) (468/746 complètes) · Aucune nouvelle sortie ; Marseille-Cassis déjà connue, inchangée. Les autres sorties de la fenêtre sont des entraînements (fractionné, footings).
 - 2026-11-05 15:21 · 1 nouvelle(s) activité(s) : 2026-11-04 Evening Run ; 1 activité(s) mise(s) à jour ; 1 sortie(s) avec cardio ajoutée(s) ; tours et records de 1 sortie(s) (448/746 complètes) ; segments de 1 sortie(s) (448/746 complètes) ; 1 tracé(s) GPS (735 au total) · Vérification horaire : une nouvelle sortie (Evening Run du 4 novembre, 7,3 km), footing sans indice de compétition ; aucune compétition dans la fenêtre.
