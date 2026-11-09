@@ -2,6 +2,7 @@
 
 Une ligne par synchro, la plus récente en haut.
 
+- 2026-11-09 15:22 · 1 nouvelle(s) activité(s) : 2026-11-08 Afternoon Run ; 1 activité(s) mise(s) à jour ; 1 sortie(s) avec cardio ajoutée(s) ; tours et records de 1 sortie(s) (510/748 complètes) ; segments de 1 sortie(s) (510/748 complètes) ; 1 tracé(s) GPS (737 au total) · Vérification horaire : nouvelle sortie du 8 novembre (Afternoon Run, 8,6 km, allure facile, titre générique) ; aucune compétition.
 - 2026-11-08 01:08 · 1 activité(s) mise(s) à jour ; tours et records de 20 sortie(s) (509/747 complètes) ; segments de 20 sortie(s) (509/747 complètes) · Aucune nouvelle sortie. Seule compétition de la fenêtre : Marseille-Cassis (déjà connue), inchangée ; les autres sorties sont des entraînements.
 - 2026-11-07 01:09 · 1 activité(s) mise(s) à jour ; tours et records de 20 sortie(s) (489/747 complètes) ; segments de 20 sortie(s) (489/747 complètes) · Aucune nouvelle sortie. Marseille-Cassis déjà connue, inchangée ; les autres sorties sont des entraînements (VMA 11x400, footings).
 - 2026-11-06 15:18 · 1 nouvelle(s) activité(s) : 2026-11-06 Lunch Run ; 1 sortie(s) avec cardio ajoutée(s) ; tours et records de 1 sortie(s) (469/747 complètes) ; segments de 1 sortie(s) (469/747 complètes) ; 1 tracé(s) GPS (736 au total) · Vérification horaire : une nouvelle sortie (Lunch Run du 6/11, 7,2 km en endurance), aucune compétition dans la fenêtre.
