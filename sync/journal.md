@@ -2,6 +2,7 @@
 
 Une ligne par synchro, la plus récente en haut.
 
+- 2026-11-14 01:10 · tours et records de 20 sortie(s) (613/751 complètes) ; segments de 20 sortie(s) (613/751 complètes) · Aucune nouvelle sortie ni compétition dans la fenêtre : 9 footings ou séances aux titres génériques, distances non standard, sans description.
 - 2026-11-13 01:10 · tours et records de 20 sortie(s) (593/751 complètes) ; segments de 20 sortie(s) (593/751 complètes) · Neuf sorties relues depuis le 2026-10-28, aucune nouvelle. Titres génériques, aucune description, séances en semaine à allure d'entraînement (séance longue du 10/11 avec récupérations, sortie courte du 09/11) : aucune compétition.
 - 2026-11-12 01:10 · 1 activité(s) mise(s) à jour ; tours et records de 20 sortie(s) (573/751 complètes) ; segments de 20 sortie(s) (573/751 complètes) · Aucune compétition dans la fenêtre du 28/10 au 11/11 : 9 sorties à titre générique, en semaine ou en fin d'après-midi, sans distance standard ni indice de course. Aucune nouvelle sortie depuis la veille.
 - 2026-11-11 15:17 · 1 nouvelle(s) activité(s) : 2026-11-11 Lunch Run ; 1 activité(s) mise(s) à jour ; 1 sortie(s) avec cardio ajoutée(s) ; tours et records de 1 sortie(s) (553/751 complètes) ; segments de 1 sortie(s) (553/751 complètes) ; 1 tracé(s) GPS (740 au total) · Vérification horaire : une nouvelle sortie (Lunch Run du 11/11, 9,1 km en fractionné 400 m, allure facile), aucune compétition dans la fenêtre.
