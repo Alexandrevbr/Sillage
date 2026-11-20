@@ -2,6 +2,7 @@
 
 Une ligne par synchro, la plus récente en haut.
 
+- 2026-11-20 01:07 · tours et records de 20 sortie(s) (736/754 complètes) ; segments de 20 sortie(s) (736/754 complètes) · Aucune nouvelle sortie depuis le Semi de Boulogne du 15/11 (1h11'36" officiel, inchangé, pas de classement dans la description). Les autres sorties de la fenêtre sont des footings, une séance sur piste et l'échauffement d'avant-course.
 - 2026-11-19 01:09 · tours et records de 20 sortie(s) (716/754 complètes) ; segments de 20 sortie(s) (716/754 complètes) · Aucune nouvelle sortie. Semi de Boulogne du 15/11 reconduit sans changement (1h11'36 officiel, pas de classement dans la description) ; la sortie de 1,2 km juste avant est son échauffement.
 - 2026-11-18 01:08 · 1 activité(s) mise(s) à jour ; tours et records de 20 sortie(s) (696/754 complètes) ; segments de 20 sortie(s) (696/754 complètes) · Aucune nouvelle sortie. Semi de Boulogne du 15/11 reconduit sans changement (1h11'36" officiel, pas de classement dans la description) ; la sortie de 1,2 km à 9h35 est son échauffement.
 - 2026-11-17 01:09 · 1 activité(s) mise(s) à jour ; tours et records de 20 sortie(s) (676/754 complètes) ; segments de 20 sortie(s) (676/754 complètes) · Aucune nouvelle sortie. Semi de Boulogne du 15/11 reconduit (1h11'36" écrit en description, pas de classement). Le 1,2 km de 9 h 35 le même jour est l'échauffement.
