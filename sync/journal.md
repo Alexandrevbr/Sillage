@@ -2,6 +2,7 @@
 
 Une ligne par synchro, la plus récente en haut.
 
+- 2026-11-26 01:08 · 1 activité(s) mise(s) à jour · Aucune nouvelle sortie. Semi de Boulogne du 15/11 reconduit tel quel (1h11'36" officiel, pas de classement dans la description) ; les autres sorties sont des footings ou l'échauffement d'avant-course.
 - 2026-11-25 01:07 · 1 nouvelle(s) activité(s) : 2026-11-24 Evening Run ; 3 activité(s) mise(s) à jour ; 1 sortie(s) avec cardio ajoutée(s) ; tours et records de 1 sortie(s) (756/756 complètes) ; segments de 1 sortie(s) (756/756 complètes) ; 1 tracé(s) GPS (745 au total) · Seule nouvelle sortie : 17 km du 24/11, séance de fractionné sur piste (400 m répétés, écoulé bien supérieur au temps en mouvement), pas une compétition. Semi de Boulogne inchangé (1h11'36").
 - 2026-11-24 01:08 · rien de neuf · Aucune nouvelle sortie. Semi de Boulogne du 15/11 reconduit tel quel (1h11'36" officiel, pas de classement dans la description) ; les autres sorties de la fenêtre sont des footings ou l'échauffement d'avant-course.
 - 2026-11-23 01:08 · 1 activité(s) mise(s) à jour · Aucune nouvelle sortie. Semi de Boulogne reconduit tel quel (1h11'36" officiel, pas de classement dans la description). Les autres sorties de la fenêtre sont des entraînements ou l'échauffement du semi.
